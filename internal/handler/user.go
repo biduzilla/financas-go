@@ -10,14 +10,16 @@ import (
 )
 
 type UserHandler struct {
-	userService   *service.UserService
+	userService   service.UserServiceInterface
 	errorResponse *e.ErrorResponse
+	validator     *validator.Validator
 }
 
-func NewUserHandler(userService *service.UserService, errResp *e.ErrorResponse) *UserHandler {
+func NewUserHandler(userService service.UserServiceInterface, errResp *e.ErrorResponse, v *validator.Validator) *UserHandler {
 	return &UserHandler{
 		userService:   userService,
 		errorResponse: errResp,
+		validator:     v,
 	}
 }
 
@@ -39,7 +41,7 @@ func (h *UserHandler) ActivateUserHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		switch {
 		case errors.Is(err, validator.ErrInvalidData):
-			h.errorResponse.FailedValidationResponse(w, r, h.userService.Validator.Errors)
+			h.errorResponse.FailedValidationResponse(w, r, h.validator.Errors)
 		default:
 			h.errorResponse.ServerErrorResponse(w, r, err)
 		}

@@ -13,7 +13,7 @@ var (
 )
 
 type Repository struct {
-	User *UserRepository
+	User UserRepository
 }
 
 func NewRepository(db *sql.DB) *Repository {

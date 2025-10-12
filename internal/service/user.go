@@ -4,16 +4,24 @@ import (
 	"errors"
 	"financas/internal/model"
 	"financas/internal/repository"
-	e "financas/utils/errors"
+	"financas/utils"
 	"financas/utils/validator"
 )
 
 type UserService struct {
-	userRepository *repository.UserRepository
+	userRepository repository.UserRepository
 	Validator      *validator.Validator
 }
 
-func NewUserService(repo *repository.UserRepository, v *validator.Validator, errResp *e.ErrorResponse) *UserService {
+type UserServiceInterface interface {
+	ActivateUser(cod int, email string) (*model.User, error)
+	Update(user *model.User) error
+	GetUserByCodAndEmail(cod int, email string) (*model.User, error)
+	Insert(user *model.User) error
+	RegisterUserHandler(user *model.User) error
+}
+
+func NewUserService(repo repository.UserRepository, v *validator.Validator) *UserService {
 	return &UserService{
 		userRepository: repo,
 		Validator:      v,
@@ -61,4 +69,27 @@ func (s *UserService) GetUserByCodAndEmail(cod int, email string) (*model.User, 
 	}
 
 	return user, nil
+}
+
+func (s *UserService) RegisterUserHandler(user *model.User) error {
+	user.Cod = utils.GenerateRandomCode()
+	return s.Insert(user)
+}
+
+func (s *UserService) Insert(user *model.User) error {
+	if model.ValidateUser(s.Validator, user); s.Validator.Valid() {
+		return validator.ErrInvalidData
+	}
+
+	err := s.userRepository.Insert(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrDuplicateEmail):
+			s.Validator.AddError("email", "a user with this email address already exists")
+			return validator.ErrInvalidData
+		default:
+			return err
+		}
+	}
+	return nil
 }

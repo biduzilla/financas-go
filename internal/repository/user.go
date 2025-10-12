@@ -9,8 +9,18 @@ import (
 	"time"
 )
 
-type UserRepository struct {
+type UserRepositoryDB struct {
 	db *sql.DB
+}
+
+type UserRepository interface {
+	GetByCodAndEmail(cod int, email string) (*model.User, error)
+	GetByID(id int64) (*model.User, error)
+	GetByEmail(email string) (*model.User, error)
+	Insert(user *model.User) error
+	UpdateCodByEmail(user *model.User) error
+	Update(user *model.User) error
+	Delete(user *model.User) error
 }
 
 const SqlSelectUser = `
@@ -27,11 +37,11 @@ const SqlSelectUser = `
 	FROM users
 `
 
-func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *sql.DB) *UserRepositoryDB {
+	return &UserRepositoryDB{db: db}
 }
 
-func (r *UserRepository) GetUserByQuery(query string, args ...any) (*model.User, error) {
+func (r *UserRepositoryDB) getUserByQuery(query string, args ...any) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -59,7 +69,7 @@ func (r *UserRepository) GetUserByQuery(query string, args ...any) (*model.User,
 	return &user, nil
 }
 
-func (r *UserRepository) GetByCodAndEmail(cod int, email string) (*model.User, error) {
+func (r *UserRepositoryDB) GetByCodAndEmail(cod int, email string) (*model.User, error) {
 	query := fmt.Sprintf(`
 	%s
 	WHERE 
@@ -68,30 +78,30 @@ func (r *UserRepository) GetByCodAndEmail(cod int, email string) (*model.User, e
 		AND cod = $2
 	`, SqlSelectUser)
 
-	return r.GetUserByQuery(query, email, cod)
+	return r.getUserByQuery(query, email, cod)
 }
 
-func (r *UserRepository) GetByID(id int64) (*model.User, error) {
+func (r *UserRepositoryDB) GetByID(id int64) (*model.User, error) {
 	query := fmt.Sprintf(`
 	%s
 	WHERE 
 		id = $1 
 		AND deleted = false
 	`, SqlSelectUser)
-	return r.GetUserByQuery(query, id)
+	return r.getUserByQuery(query, id)
 }
 
-func (r *UserRepository) GetByEmail(email string) (*model.User, error) {
+func (r *UserRepositoryDB) GetByEmail(email string) (*model.User, error) {
 	query := fmt.Sprintf(`
 	%s
 	WHERE 
 		email = $1 
 		AND deleted = false
 	`, SqlSelectUser)
-	return r.GetUserByQuery(query, email)
+	return r.getUserByQuery(query, email)
 }
 
-func (r *UserRepository) Insert(user *model.User) error {
+func (r *UserRepositoryDB) Insert(user *model.User) error {
 	query := `
 	INSERT INTO users (name, email, phone,cod, password_hash, activated,deleted)
 	VALUES ($1, $2, $3, $4, $5, $6,false)
@@ -129,7 +139,7 @@ func (r *UserRepository) Insert(user *model.User) error {
 	return nil
 }
 
-func (r *UserRepository) UpdateCodByEmail(user *model.User) error {
+func (r *UserRepositoryDB) UpdateCodByEmail(user *model.User) error {
 	query := `
 	UPDATE users SET
 	cod = $1
@@ -139,7 +149,7 @@ func (r *UserRepository) UpdateCodByEmail(user *model.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := r.db.QueryRowContext(ctx, query, user.ID, user.Cod, user.Version).Scan(
+	err := r.db.QueryRowContext(ctx, query, user.Cod, user.ID, user.Version).Scan(
 		&user.Version,
 	)
 
@@ -155,7 +165,7 @@ func (r *UserRepository) UpdateCodByEmail(user *model.User) error {
 
 }
 
-func (r *UserRepository) Update(user *model.User) error {
+func (r *UserRepositoryDB) Update(user *model.User) error {
 	query := `
 	UPDATE users SET 
 		name = $1,
@@ -203,7 +213,7 @@ func (r *UserRepository) Update(user *model.User) error {
 	return nil
 }
 
-func (r *UserRepository) Delete(user *model.User) error {
+func (r *UserRepositoryDB) Delete(user *model.User) error {
 	query := `
 	UPDATE users set
 	deleted = true

@@ -1,11 +1,18 @@
 package service
 
+import (
+	"database/sql"
+	"financas/internal/repository"
+	"financas/utils/validator"
+)
+
 type Service struct {
-	userService *UserService
+	User UserServiceInterface
 }
 
-func NewService(userService *UserService) *Service {
+func NewService(db *sql.DB, v *validator.Validator) *Service {
+	repository := repository.NewRepository(db)
 	return &Service{
-		userService: userService,
+		User: NewUserService(repository.User, v),
 	}
 }
