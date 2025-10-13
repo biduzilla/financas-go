@@ -11,35 +11,35 @@ import (
 	"time"
 )
 
-type config struct {
-	port int
-	env  string
-	db   struct {
-		dsn          string
-		maxOpenConns int
-		maxIdleConns int
-		maxIdleTime  string
+type Config struct {
+	Port int
+	Env  string
+	DB   struct {
+		DSN          string
+		MaxOpenConns int
+		MaxIdleConns int
+		MaxIdleTime  string
 	}
-	limiter struct {
-		rps     float64
-		burst   int
-		enabled bool
+	Limiter struct {
+		RPS     float64
+		Burst   int
+		Enabled bool
 	}
-	cors struct {
-		trustedOrigins []string
+	CORS struct {
+		TrustedOrigins []string
 	}
 }
 
 type application struct {
-	config config
-	logger *jsonlog.Logger
+	config Config
+	Logger *jsonlog.Logger
 	wg     sync.WaitGroup
 	db     *sql.DB
 }
 
 const version = "1.0.0"
 
-func NewApp(cfg config) *application {
+func NewApp(cfg Config) *application {
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	db, err := openDB(cfg)
@@ -47,7 +47,6 @@ func NewApp(cfg config) *application {
 		logger.PrintFatal(err, nil)
 	}
 
-	defer db.Close()
 	logger.PrintInfo("database connection pool established", nil)
 
 	expvar.NewString("version").Set(version)
@@ -65,21 +64,21 @@ func NewApp(cfg config) *application {
 	}))
 	return &application{
 		config: cfg,
-		logger: logger,
+		Logger: logger,
 		db:     db,
 	}
 }
 
-func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", cfg.db.dsn)
+func openDB(cfg Config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.DB.DSN)
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(cfg.db.maxOpenConns)
-	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+	db.SetMaxOpenConns(cfg.DB.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.DB.MaxIdleConns)
 
-	duration, err := time.ParseDuration(cfg.db.maxIdleTime)
+	duration, err := time.ParseDuration(cfg.DB.MaxIdleTime)
 	if err != nil {
 		return nil, err
 	}
