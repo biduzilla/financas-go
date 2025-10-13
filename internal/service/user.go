@@ -11,26 +11,24 @@ import (
 
 type UserService struct {
 	userRepository repository.UserRepository
-	Validator      *validator.Validator
 }
 
 type UserServiceInterface interface {
-	ActivateUser(cod int, email string) (*model.User, error)
+	ActivateUser(cod int, email string, v *validator.Validator) (*model.User, error)
 	Update(user *model.User) error
-	GetUserByCodAndEmail(cod int, email string) (*model.User, error)
-	Insert(user *model.User) error
-	RegisterUserHandler(user *model.User) error
+	GetUserByCodAndEmail(cod int, email string, v *validator.Validator) (*model.User, error)
+	Insert(user *model.User, v *validator.Validator) error
+	RegisterUserHandler(user *model.User, v *validator.Validator) error
 }
 
-func NewUserService(repo repository.UserRepository, v *validator.Validator) *UserService {
+func NewUserService(repo repository.UserRepository) *UserService {
 	return &UserService{
 		userRepository: repo,
-		Validator:      v,
 	}
 }
 
-func (s *UserService) ActivateUser(cod int, email string) (*model.User, error) {
-	if model.ValidateEmail(s.Validator, email); !s.Validator.Valid() {
+func (s *UserService) ActivateUser(cod int, email string, v *validator.Validator) (*model.User, error) {
+	if model.ValidateEmail(v, email); !v.Valid() {
 		return nil, e.ErrInvalidData
 	}
 
@@ -57,12 +55,12 @@ func (s *UserService) Update(user *model.User) error {
 	return nil
 }
 
-func (s *UserService) GetUserByCodAndEmail(cod int, email string) (*model.User, error) {
+func (s *UserService) GetUserByCodAndEmail(cod int, email string, v *validator.Validator) (*model.User, error) {
 	user, err := s.userRepository.GetByCodAndEmail(cod, email)
 	if err != nil {
 		switch {
 		case errors.Is(err, e.ErrRecordNotFound):
-			s.Validator.AddError("code", "invalid validation code or email")
+			v.AddError("code", "invalid validation code or email")
 			return nil, e.ErrInvalidData
 		default:
 			return nil, err
@@ -72,13 +70,13 @@ func (s *UserService) GetUserByCodAndEmail(cod int, email string) (*model.User, 
 	return user, nil
 }
 
-func (s *UserService) RegisterUserHandler(user *model.User) error {
+func (s *UserService) RegisterUserHandler(user *model.User, v *validator.Validator) error {
 	user.Cod = utils.GenerateRandomCode()
-	return s.Insert(user)
+	return s.Insert(user, v)
 }
 
-func (s *UserService) Insert(user *model.User) error {
-	if model.ValidateUser(s.Validator, user); s.Validator.Valid() {
+func (s *UserService) Insert(user *model.User, v *validator.Validator) error {
+	if model.ValidateUser(v, user); !v.Valid() {
 		return e.ErrInvalidData
 	}
 
@@ -86,7 +84,7 @@ func (s *UserService) Insert(user *model.User) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, e.ErrDuplicateEmail):
-			s.Validator.AddError("email", "a user with this email address already exists")
+			v.AddError("email", "a user with this email address already exists")
 			return e.ErrInvalidData
 		default:
 			return err

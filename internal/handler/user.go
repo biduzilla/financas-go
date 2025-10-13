@@ -12,7 +12,6 @@ import (
 type UserHandler struct {
 	user          service.UserServiceInterface
 	errorResponse e.ErrorResponseInterface
-	validator     *validator.Validator
 }
 
 type UserHandlerInterface interface {
@@ -20,11 +19,10 @@ type UserHandlerInterface interface {
 	CreateUserHandler(w http.ResponseWriter, r *http.Request)
 }
 
-func NewUserHandler(userService service.UserServiceInterface, errResp e.ErrorResponseInterface, v *validator.Validator) *UserHandler {
+func NewUserHandler(userService service.UserServiceInterface, errResp e.ErrorResponseInterface) *UserHandler {
 	return &UserHandler{
 		user:          userService,
 		errorResponse: errResp,
-		validator:     v,
 	}
 }
 
@@ -41,10 +39,12 @@ func (h *UserHandler) ActivateUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	user, err := h.user.ActivateUser(input.Cod, input.Email)
+	v := validator.New()
+
+	user, err := h.user.ActivateUser(input.Cod, input.Email, v)
 
 	if err != nil {
-		h.errorResponse.HandlerErrorResponse(w, r, err, h.validator)
+		h.errorResponse.HandlerErrorResponse(w, r, err, v)
 		return
 	}
 
@@ -68,9 +68,11 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.user.RegisterUserHandler(user)
+	v := validator.New()
+
+	err = h.user.RegisterUserHandler(user, v)
 	if err != nil {
-		h.errorResponse.HandlerErrorResponse(w, r, err, h.validator)
+		h.errorResponse.HandlerErrorResponse(w, r, err, v)
 		return
 	}
 
