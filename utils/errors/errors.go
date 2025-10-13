@@ -1,18 +1,68 @@
 package errors
 
 import (
+	"errors"
 	"financas/internal/jsonlog"
 	"financas/utils"
+	"financas/utils/validator"
 	"fmt"
 	"net/http"
+)
+
+var (
+	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict   = errors.New("edit conflict")
+	ErrDuplicateEmail = errors.New("duplicate email")
+	ErrDuplicatePhone = errors.New("duplicate phone")
+	ErrInvalidData    = errors.New("invalid data")
 )
 
 type ErrorResponse struct {
 	logger *jsonlog.Logger
 }
 
+type ErrorResponseInterface interface {
+	NotPermittedResponse(w http.ResponseWriter, r *http.Request)
+	AuthenticationRequiredResponse(w http.ResponseWriter, r *http.Request)
+	InactiveAccountResponse(w http.ResponseWriter, r *http.Request)
+	InvalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request)
+	InvalidCredentialsResponse(w http.ResponseWriter, r *http.Request)
+	RateLimitExceededResponse(w http.ResponseWriter, r *http.Request)
+	ServerErrorResponse(w http.ResponseWriter, r *http.Request, err error)
+	NotFoundResponse(w http.ResponseWriter, r *http.Request)
+	MethodNotAllowedResponse(w http.ResponseWriter, r *http.Request)
+	BadRequestResponse(w http.ResponseWriter, r *http.Request, err error)
+	FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string)
+	EditConflictResponse(w http.ResponseWriter, r *http.Request)
+	HandlerErrorResponse(w http.ResponseWriter, r *http.Request, err error, v *validator.Validator)
+}
+
 func NewErrorResponse(logger *jsonlog.Logger) *ErrorResponse {
 	return &ErrorResponse{logger: logger}
+}
+
+func (e *ErrorResponse) HandlerErrorResponse(w http.ResponseWriter, r *http.Request, err error, v *validator.Validator) {
+	switch {
+	case errors.Is(err, ErrInvalidData):
+		e.FailedValidationResponse(w, r, v.Errors)
+
+	case errors.Is(err, ErrRecordNotFound):
+		e.NotFoundResponse(w, r)
+
+	case errors.Is(err, ErrDuplicateEmail):
+		v.AddError("email", "a user with this email address already exists")
+		e.FailedValidationResponse(w, r, v.Errors)
+
+	case errors.Is(err, ErrDuplicatePhone):
+		v.AddError("phone", "a user with this phone number already exists")
+		e.FailedValidationResponse(w, r, v.Errors)
+
+	case errors.Is(err, ErrEditConflict):
+		e.EditConflictResponse(w, r)
+
+	default:
+		e.ServerErrorResponse(w, r, err)
+	}
 }
 
 func (e *ErrorResponse) NotPermittedResponse(w http.ResponseWriter, r *http.Request) {

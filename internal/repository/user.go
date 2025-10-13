@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"financas/internal/model"
+	e "financas/utils/errors"
 	"fmt"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type UserRepositoryDB struct {
@@ -61,7 +64,7 @@ func (r *UserRepositoryDB) getUserByQuery(query string, args ...any) (*model.Use
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return nil, ErrRecordNotFound
+			return nil, e.ErrRecordNotFound
 		default:
 			return nil, err
 		}
@@ -126,14 +129,20 @@ func (r *UserRepositoryDB) Insert(user *model.User) error {
 	)
 
 	if err != nil {
-		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
-			return ErrDuplicateEmail
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_phone_key"`:
-			return ErrDuplicatePhone
-		default:
-			return err
+		if errors.Is(err, sql.ErrNoRows) {
+			return e.ErrEditConflict
 		}
+
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Constraint {
+			case "users_email_key":
+				return e.ErrDuplicateEmail
+			case "users_phone_key":
+				return e.ErrDuplicatePhone
+			}
+		}
+
+		return err
 	}
 
 	return nil
@@ -156,7 +165,7 @@ func (r *UserRepositoryDB) UpdateCodByEmail(user *model.User) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return ErrEditConflict
+			return e.ErrEditConflict
 		default:
 			return err
 		}
@@ -199,16 +208,20 @@ func (r *UserRepositoryDB) Update(user *model.User) error {
 	)
 
 	if err != nil {
-		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
-			return ErrDuplicateEmail
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_phone_key"`:
-			return ErrDuplicatePhone
-		case errors.Is(err, sql.ErrNoRows):
-			return ErrEditConflict
-		default:
-			return err
+		if errors.Is(err, sql.ErrNoRows) {
+			return e.ErrEditConflict
 		}
+
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Constraint {
+			case "users_email_key":
+				return e.ErrDuplicateEmail
+			case "users_phone_key":
+				return e.ErrDuplicatePhone
+			}
+		}
+
+		return err
 	}
 	return nil
 }
@@ -234,7 +247,7 @@ func (r *UserRepositoryDB) Delete(user *model.User) error {
 	}
 
 	if rowsAffected == 0 {
-		return ErrRecordNotFound
+		return e.ErrRecordNotFound
 	}
 
 	return nil

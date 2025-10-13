@@ -5,6 +5,7 @@ import (
 	"financas/internal/model"
 	"financas/internal/repository"
 	"financas/utils"
+	e "financas/utils/errors"
 	"financas/utils/validator"
 )
 
@@ -30,7 +31,7 @@ func NewUserService(repo repository.UserRepository, v *validator.Validator) *Use
 
 func (s *UserService) ActivateUser(cod int, email string) (*model.User, error) {
 	if model.ValidateEmail(s.Validator, email); !s.Validator.Valid() {
-		return nil, validator.ErrInvalidData
+		return nil, e.ErrInvalidData
 	}
 
 	user, err := s.userRepository.GetByCodAndEmail(cod, email)
@@ -60,9 +61,9 @@ func (s *UserService) GetUserByCodAndEmail(cod int, email string) (*model.User, 
 	user, err := s.userRepository.GetByCodAndEmail(cod, email)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrRecordNotFound):
+		case errors.Is(err, e.ErrRecordNotFound):
 			s.Validator.AddError("code", "invalid validation code or email")
-			return nil, validator.ErrInvalidData
+			return nil, e.ErrInvalidData
 		default:
 			return nil, err
 		}
@@ -78,15 +79,15 @@ func (s *UserService) RegisterUserHandler(user *model.User) error {
 
 func (s *UserService) Insert(user *model.User) error {
 	if model.ValidateUser(s.Validator, user); s.Validator.Valid() {
-		return validator.ErrInvalidData
+		return e.ErrInvalidData
 	}
 
 	err := s.userRepository.Insert(user)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrDuplicateEmail):
+		case errors.Is(err, e.ErrDuplicateEmail):
 			s.Validator.AddError("email", "a user with this email address already exists")
-			return validator.ErrInvalidData
+			return e.ErrInvalidData
 		default:
 			return err
 		}

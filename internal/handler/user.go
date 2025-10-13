@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"errors"
+	"financas/internal/model"
 	"financas/internal/service"
 	"financas/utils"
 	e "financas/utils/errors"
@@ -10,14 +10,19 @@ import (
 )
 
 type UserHandler struct {
-	userService   service.UserServiceInterface
-	errorResponse *e.ErrorResponse
+	user          service.UserServiceInterface
+	errorResponse e.ErrorResponseInterface
 	validator     *validator.Validator
 }
 
-func NewUserHandler(userService service.UserServiceInterface, errResp *e.ErrorResponse, v *validator.Validator) *UserHandler {
+type UserHandlerInterface interface {
+	ActivateUserHandler(w http.ResponseWriter, r *http.Request)
+	CreateUserHandler(w http.ResponseWriter, r *http.Request)
+}
+
+func NewUserHandler(userService service.UserServiceInterface, errResp e.ErrorResponseInterface, v *validator.Validator) *UserHandler {
 	return &UserHandler{
-		userService:   userService,
+		user:          userService,
 		errorResponse: errResp,
 		validator:     v,
 	}
@@ -36,15 +41,37 @@ func (h *UserHandler) ActivateUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	user, err := h.userService.ActivateUser(input.Cod, input.Email)
+	user, err := h.user.ActivateUser(input.Cod, input.Email)
 
 	if err != nil {
-		switch {
-		case errors.Is(err, validator.ErrInvalidData):
-			h.errorResponse.FailedValidationResponse(w, r, h.validator.Errors)
-		default:
-			h.errorResponse.ServerErrorResponse(w, r, err)
-		}
+		h.errorResponse.HandlerErrorResponse(w, r, err, h.validator)
+		return
+	}
+
+	err = utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user}, nil)
+	if err != nil {
+		h.errorResponse.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	var userDTO model.UserSaveDTO
+	err := utils.ReadJSON(w, r, &userDTO)
+	if err != nil {
+		h.errorResponse.BadRequestResponse(w, r, err)
+		return
+	}
+
+	user, err := userDTO.ToModel()
+	if err != nil {
+		h.errorResponse.ServerErrorResponse(w, r, err)
+		return
+	}
+
+	err = h.user.RegisterUserHandler(user)
+	if err != nil {
+		h.errorResponse.HandlerErrorResponse(w, r, err, h.validator)
+		return
 	}
 
 	err = utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user}, nil)
