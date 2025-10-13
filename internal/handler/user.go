@@ -48,7 +48,7 @@ func (h *UserHandler) ActivateUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user}, nil)
+	err = utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user.ToDTO()}, nil)
 	if err != nil {
 		h.errorResponse.ServerErrorResponse(w, r, err)
 	}
@@ -76,7 +76,7 @@ func (h *UserHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user}, nil)
+	err = utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user.ToDTO()}, nil)
 	if err != nil {
 		h.errorResponse.ServerErrorResponse(w, r, err)
 	}

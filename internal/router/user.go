@@ -16,8 +16,12 @@ func NewUserRouter(userHandler handler.UserHandlerInterface) *UserRouter {
 	}
 }
 
+type UserRoutesInterface interface {
+	UserRoutes(r chi.Router)
+}
+
 func (u *UserRouter) UserRoutes(r chi.Router) {
-	r.Route("/user", func(r chi.Router) {
+	r.Route("/users", func(r chi.Router) {
 		r.Post("/activate", u.User.ActivateUserHandler)
 		r.Post("/", u.User.CreateUserHandler)
 	})

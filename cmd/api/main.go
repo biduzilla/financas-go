@@ -20,7 +20,7 @@ func main() {
 	cfg.Limiter.Enabled = c.RateLimiter.Enabled
 
 	app := api.NewApp(cfg)
-	err := app.Serve()
+	err := app.Serve(c)
 	if err != nil {
 		app.Logger.PrintFatal(err, nil)
 	}

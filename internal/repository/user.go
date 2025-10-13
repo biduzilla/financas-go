@@ -49,7 +49,7 @@ func (r *UserRepositoryDB) getUserByQuery(query string, args ...any) (*model.Use
 	defer cancel()
 
 	var user model.User
-	err := r.db.QueryRowContext(ctx, query, args).Scan(
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(
 		&user.ID,
 		&user.CreatedAt,
 		&user.Name,

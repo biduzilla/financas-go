@@ -2,6 +2,7 @@ package router
 
 import (
 	"database/sql"
+	"financas/configuration"
 	"financas/internal/handler"
 	"financas/internal/jsonlog"
 	"financas/utils/errors"
@@ -11,16 +12,18 @@ import (
 )
 
 type Router struct {
-	User    *UserRouter
+	User    UserRoutesInterface
+	Auth    AuthRoutesInterface
 	errResp errors.ErrorResponseInterface
 }
 
-func NewRouter(db *sql.DB, logger *jsonlog.Logger) *Router {
+func NewRouter(db *sql.DB, logger *jsonlog.Logger, config *configuration.Conf) *Router {
 	e := errors.NewErrorResponse(logger)
-	h := handler.NewHandler(db, e)
+	h := handler.NewHandler(db, e, config)
 
 	return &Router{
 		User:    NewUserRouter(h.User),
+		Auth:    NewAuthRouter(h.Auth),
 		errResp: e,
 	}
 }
@@ -38,6 +41,7 @@ func (router *Router) RegisterRoutes() *chi.Mux {
 
 	r.Route("/v1", func(r chi.Router) {
 		router.User.UserRoutes(r)
+		router.Auth.AuthRoutes(r)
 	})
 	return r
 }

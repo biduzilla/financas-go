@@ -19,12 +19,22 @@ type UserServiceInterface interface {
 	GetUserByCodAndEmail(cod int, email string, v *validator.Validator) (*model.User, error)
 	Insert(user *model.User, v *validator.Validator) error
 	RegisterUserHandler(user *model.User, v *validator.Validator) error
+	GetUserByEmail(email string, v *validator.Validator) (*model.User, error)
 }
 
 func NewUserService(repo repository.UserRepository) *UserService {
 	return &UserService{
 		userRepository: repo,
 	}
+}
+
+func (s *UserService) GetUserByEmail(email string, v *validator.Validator) (*model.User, error) {
+	user, err := s.userRepository.GetByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *UserService) ActivateUser(cod int, email string, v *validator.Validator) (*model.User, error) {

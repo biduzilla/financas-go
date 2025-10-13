@@ -10,11 +10,12 @@ import (
 )
 
 var (
-	ErrRecordNotFound = errors.New("record not found")
-	ErrEditConflict   = errors.New("edit conflict")
-	ErrDuplicateEmail = errors.New("duplicate email")
-	ErrDuplicatePhone = errors.New("duplicate phone")
-	ErrInvalidData    = errors.New("invalid data")
+	ErrRecordNotFound     = errors.New("record not found")
+	ErrEditConflict       = errors.New("edit conflict")
+	ErrDuplicateEmail     = errors.New("duplicate email")
+	ErrDuplicatePhone     = errors.New("duplicate phone")
+	ErrInvalidData        = errors.New("invalid data")
+	ErrInvalidCredentials = errors.New("invalid authentication credentials")
 )
 
 type ErrorResponse struct {
