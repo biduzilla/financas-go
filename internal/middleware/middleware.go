@@ -18,6 +18,13 @@ import (
 	"golang.org/x/time/rate"
 )
 
+var (
+	totalRequestsReceived           = expvar.NewInt("total_requests_received")
+	totalResponsesSent              = expvar.NewInt("total_responses_sent")
+	totalProcessingTimeMicroseconds = expvar.NewInt("total_processing_time_μs")
+	totalResponsesSentByStatus      = expvar.NewMap("total_responses_sent_by_status")
+)
+
 type Middleware struct {
 	ErrResp        errors.ErrorResponseInterface
 	ContextGetUser func(r *http.Request) *model.User
@@ -80,20 +87,16 @@ func (mw *metricsResponseWriter) Unwrap() http.ResponseWriter {
 }
 
 func (m *Middleware) Metrics(next http.Handler) http.Handler {
-	var (
-		totalRequestsReceived           = expvar.NewInt("total_requests_received")
-		totalResponsesSent              = expvar.NewInt("total_responses_sent")
-		totalProcessingTimeMicroseconds = expvar.NewInt("total_processing_time_μs")
-		totalResponsesSentByStatus      = expvar.NewMap("total_responses_sent_by_status")
-	)
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		totalRequestsReceived.Add(1)
+
 		mw := newMetricsResponseWriter(w)
 		next.ServeHTTP(mw, r)
+
 		totalResponsesSent.Add(1)
 		totalResponsesSentByStatus.Add(strconv.Itoa(mw.statusCode), 1)
+
 		duration := time.Since(start).Microseconds()
 		totalProcessingTimeMicroseconds.Add(duration)
 	})

@@ -71,7 +71,7 @@ func (router *Router) RegisterRoutes() *chi.Mux {
 	})
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/debug/vars", expvar.Handler())
+		r.Mount("/debug/vars", expvar.Handler())
 		router.User.UserRoutes(r)
 		router.Auth.AuthRoutes(r)
 
