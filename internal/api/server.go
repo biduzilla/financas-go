@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"financas/configuration"
 	"financas/internal/router"
 	"fmt"
 	"log"
@@ -14,15 +13,15 @@ import (
 	"time"
 )
 
-func (app *application) Serve(c *configuration.Conf) error {
+func (app *application) Serve() error {
 	defer app.db.Close()
 
 	r := router.NewRouter(
 		app.db,
 		app.Logger,
-		c,
 		app.ContextGetUser,
 		app.ContextSetUser,
+		app.config,
 	)
 
 	srv := &http.Server{

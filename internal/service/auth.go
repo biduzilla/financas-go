@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	"financas/configuration"
+	"financas/internal/config"
 	"financas/internal/model"
 	e "financas/utils/errors"
 	"financas/utils/validator"
@@ -13,7 +13,7 @@ import (
 
 type AuthService struct {
 	User   UserServiceInterface
-	config *configuration.Conf
+	config config.Config
 }
 
 type AuthServiceInterface interface {
@@ -21,7 +21,7 @@ type AuthServiceInterface interface {
 	ExtractUsername(tokenString string) (string, error)
 }
 
-func NewAuthService(userService UserServiceInterface, config *configuration.Conf) *AuthService {
+func NewAuthService(userService UserServiceInterface, config config.Config) *AuthService {
 	return &AuthService{
 		User:   userService,
 		config: config,

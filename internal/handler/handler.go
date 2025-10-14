@@ -2,7 +2,7 @@ package handler
 
 import (
 	"database/sql"
-	"financas/configuration"
+	"financas/internal/config"
 	"financas/internal/service"
 	"financas/utils/errors"
 )
@@ -14,7 +14,7 @@ type Handler struct {
 	Service *service.Service
 }
 
-func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config *configuration.Conf) *Handler {
+func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config config.Config) *Handler {
 	service := service.NewService(db, config)
 
 	return &Handler{

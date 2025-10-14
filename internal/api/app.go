@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"expvar"
+	"financas/internal/config"
 	"financas/internal/jsonlog"
 	"os"
 	"runtime"
@@ -11,27 +12,8 @@ import (
 	"time"
 )
 
-type Config struct {
-	Port int
-	Env  string
-	DB   struct {
-		DSN          string
-		MaxOpenConns int
-		MaxIdleConns int
-		MaxIdleTime  string
-	}
-	Limiter struct {
-		RPS     float64
-		Burst   int
-		Enabled bool
-	}
-	CORS struct {
-		TrustedOrigins []string
-	}
-}
-
 type application struct {
-	config Config
+	config config.Config
 	Logger *jsonlog.Logger
 	wg     sync.WaitGroup
 	db     *sql.DB
@@ -39,7 +21,7 @@ type application struct {
 
 const version = "1.0.0"
 
-func NewApp(cfg Config) *application {
+func NewApp(cfg config.Config) *application {
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	db, err := openDB(cfg)
@@ -69,7 +51,7 @@ func NewApp(cfg Config) *application {
 	}
 }
 
-func openDB(cfg Config) (*sql.DB, error) {
+func openDB(cfg config.Config) (*sql.DB, error) {
 	db, err := sql.Open("postgres", cfg.DB.DSN)
 	if err != nil {
 		return nil, err

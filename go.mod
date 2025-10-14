@@ -22,4 +22,5 @@ require (
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/time v0.14.0
 )

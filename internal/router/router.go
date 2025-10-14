@@ -2,7 +2,8 @@ package router
 
 import (
 	"database/sql"
-	"financas/configuration"
+	"expvar"
+	"financas/internal/config"
 	"financas/internal/handler"
 	"financas/internal/jsonlog"
 	"financas/internal/middleware"
@@ -21,14 +22,15 @@ type Router struct {
 	ContextGetUser func(r *http.Request) *model.User
 	ContextSetUser func(r *http.Request, user *model.User) *http.Request
 	Handler        *handler.Handler
+	Config         config.Config
 }
 
 func NewRouter(
 	db *sql.DB,
 	logger *jsonlog.Logger,
-	Config *configuration.Conf,
 	contextGetUser func(r *http.Request) *model.User,
 	contextSetUser func(r *http.Request, user *model.User) *http.Request,
+	Config config.Config,
 ) *Router {
 	e := errors.NewErrorResponse(logger)
 	h := handler.NewHandler(db, e, Config)
@@ -51,7 +53,14 @@ func (router *Router) RegisterRoutes() *chi.Mux {
 		router.ContextSetUser,
 		router.Handler.Service.Auth,
 		router.Handler.Service.User,
+		router.Config,
 	)
+
+	r.Use(m.RecoverPanic)
+	r.Use(m.Metrics)
+	r.Use(m.RateLimit)
+	r.Use(m.EnableCORS)
+	r.Use(m.Authenticate)
 
 	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
 		router.ErrResp.NotFoundResponse(w, req)
@@ -62,6 +71,7 @@ func (router *Router) RegisterRoutes() *chi.Mux {
 	})
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Get("/debug/vars", expvar.Handler())
 		router.User.UserRoutes(r)
 		router.Auth.AuthRoutes(r)
 

@@ -2,7 +2,7 @@ package service
 
 import (
 	"database/sql"
-	"financas/configuration"
+	"financas/internal/config"
 	"financas/internal/repository"
 )
 
@@ -11,7 +11,7 @@ type Service struct {
 	Auth AuthServiceInterface
 }
 
-func NewService(db *sql.DB, config *configuration.Conf) *Service {
+func NewService(db *sql.DB, config config.Config) *Service {
 	repository := repository.NewRepository(db)
 	userService := NewUserService(repository.User)
 	return &Service{

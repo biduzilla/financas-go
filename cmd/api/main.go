@@ -3,11 +3,12 @@ package main
 import (
 	"financas/configuration"
 	"financas/internal/api"
+	"financas/internal/config"
 )
 
 func main() {
 	c := configuration.New()
-	var cfg api.Config
+	var cfg config.Config
 
 	cfg.Port = c.Server.Port
 	cfg.Env = "development"
@@ -20,7 +21,7 @@ func main() {
 	cfg.Limiter.Enabled = c.RateLimiter.Enabled
 
 	app := api.NewApp(cfg)
-	err := app.Serve(c)
+	err := app.Serve()
 	if err != nil {
 		app.Logger.PrintFatal(err, nil)
 	}
