@@ -17,7 +17,13 @@ import (
 func (app *application) Serve(c *configuration.Conf) error {
 	defer app.db.Close()
 
-	r := router.NewRouter(app.db, app.Logger, c)
+	r := router.NewRouter(
+		app.db,
+		app.Logger,
+		c,
+		app.ContextGetUser,
+		app.ContextSetUser,
+	)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.config.Port),

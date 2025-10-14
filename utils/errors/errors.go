@@ -16,6 +16,7 @@ var (
 	ErrDuplicatePhone     = errors.New("duplicate phone")
 	ErrInvalidData        = errors.New("invalid data")
 	ErrInvalidCredentials = errors.New("invalid authentication credentials")
+	ErrInactiveAccount    = errors.New("your user account must be activated to access this resource")
 )
 
 type ErrorResponse struct {
@@ -60,6 +61,9 @@ func (e *ErrorResponse) HandlerErrorResponse(w http.ResponseWriter, r *http.Requ
 
 	case errors.Is(err, ErrEditConflict):
 		e.EditConflictResponse(w, r)
+
+	case errors.Is(err, ErrInactiveAccount):
+		e.InactiveAccountResponse(w, r)
 
 	default:
 		e.ServerErrorResponse(w, r, err)

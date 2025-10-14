@@ -18,6 +18,7 @@ type AuthService struct {
 
 type AuthServiceInterface interface {
 	Login(v *validator.Validator, email, password string) (string, error)
+	ExtractUsername(tokenString string) (string, error)
 }
 
 func NewAuthService(userService UserServiceInterface, config *configuration.Conf) *AuthService {
@@ -43,6 +44,10 @@ func (s *AuthService) Login(v *validator.Validator, email, password string) (str
 		default:
 			return "", err
 		}
+	}
+
+	if !user.Activated {
+		return "", e.ErrInactiveAccount
 	}
 
 	match, err := user.Password.Matches(password)
@@ -75,4 +80,30 @@ func (s *AuthService) createToken(username string) (string, error) {
 	}
 
 	return tokenStr, nil
+}
+
+func (s *AuthService) ExtractUsername(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		return []byte(s.config.Security.SecretKey), nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if !token.Valid {
+		return "", nil
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", nil
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return "", nil
+	}
+
+	return username, nil
 }

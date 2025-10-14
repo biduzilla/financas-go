@@ -11,6 +11,7 @@ type Handler struct {
 	User    UserHandlerInterface
 	Auth    AuthHandlerInterface
 	errResp errors.ErrorResponseInterface
+	Service *service.Service
 }
 
 func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config *configuration.Conf) *Handler {
@@ -20,5 +21,6 @@ func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config *confi
 		User:    NewUserHandler(service.User, errResp),
 		Auth:    NewAuthHandler(service.Auth, errResp),
 		errResp: errResp,
+		Service: service,
 	}
 }
