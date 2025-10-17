@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"financas/utils/validator"
+	"time"
+)
 
 type Category struct {
 	ID        int64
@@ -98,4 +101,12 @@ func (m *Category) ToDTO() *CategoryDTO {
 	category.Version = &m.Version
 
 	return category
+}
+
+func (c *Category) ValidateCategory(v *validator.Validator) {
+	v.Check(c.Name != "", "name", "must be provided")
+	v.Check(len(c.Name) <= 500, "name", "must not be more than 500 bytes long")
+	v.Check(c.Type.String() != "", "type", "must be provided")
+	v.Check(c.Type.String() != "Unknown", "type", "invalid type")
+	v.Check(c.Color != "", "color", "must be provided")
 }

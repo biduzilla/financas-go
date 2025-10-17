@@ -13,6 +13,7 @@ var (
 	ErrRecordNotFound     = errors.New("record not found")
 	ErrEditConflict       = errors.New("edit conflict")
 	ErrDuplicateEmail     = errors.New("duplicate email")
+	ErrDuplicateName      = errors.New("duplicate name")
 	ErrDuplicatePhone     = errors.New("duplicate phone")
 	ErrInvalidData        = errors.New("invalid data")
 	ErrInvalidCredentials = errors.New("invalid authentication credentials")
@@ -52,11 +53,15 @@ func (e *ErrorResponse) HandlerErrorResponse(w http.ResponseWriter, r *http.Requ
 		e.NotFoundResponse(w, r)
 
 	case errors.Is(err, ErrDuplicateEmail):
-		v.AddError("email", "a user with this email address already exists")
+		v.AddError("email", "a register with this email address already exists")
+		e.FailedValidationResponse(w, r, v.Errors)
+
+	case errors.Is(err, ErrDuplicateName):
+		v.AddError("name", "a register with this name already exists")
 		e.FailedValidationResponse(w, r, v.Errors)
 
 	case errors.Is(err, ErrDuplicatePhone):
-		v.AddError("phone", "a user with this phone number already exists")
+		v.AddError("phone", "a register with this phone number already exists")
 		e.FailedValidationResponse(w, r, v.Errors)
 
 	case errors.Is(err, ErrEditConflict):

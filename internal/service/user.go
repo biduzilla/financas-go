@@ -86,7 +86,7 @@ func (s *UserService) RegisterUserHandler(user *model.User, v *validator.Validat
 }
 
 func (s *UserService) Insert(user *model.User, v *validator.Validator) error {
-	if model.ValidateUser(v, user); !v.Valid() {
+	if user.ValidateUser(v); !v.Valid() {
 		return e.ErrInvalidData
 	}
 
