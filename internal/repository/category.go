@@ -23,6 +23,14 @@ func NewCategoryRepository(db *sql.DB) *CategoryRepository {
 	}
 }
 
+type CategoryRepositoryIntercafe interface {
+	GetByID(id int64, userID int64) (*model.Category, error)
+	GetAll(name string, userID int64, f filters.Filters) ([]*model.Category, filters.Metadata, error)
+	Insert(category *model.Category) error
+	Update(category *model.Category, userID int64) error
+	Delete(id int64, userID int64) error
+}
+
 func (r *CategoryRepository) GetByID(id int64, userID int64) (*model.Category, error) {
 	query := `
 	SELECT id, created_at, name, type, color, user_id,version
