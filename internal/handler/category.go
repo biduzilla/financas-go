@@ -100,7 +100,7 @@ func (h *CategoryHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	user := h.ContextGetUser(r)
 	category := dto.ToModel()
 
-	if err := h.CategoryService.Insert(category, v); err != nil {
+	if err := h.CategoryService.Insert(category, v, user.ID); err != nil {
 		h.errorResponse.HandlerErrorResponse(w, r, err, v)
 		return
 	}

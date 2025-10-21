@@ -15,7 +15,7 @@ type CategoryService struct {
 type CategoryServiceInterface interface {
 	GetByID(id int64, userID int64) (*model.Category, error)
 	GetAll(name string, userID int64, f filters.Filters, v *validator.Validator) ([]*model.Category, filters.Metadata, error)
-	Insert(category *model.Category, v *validator.Validator) error
+	Insert(category *model.Category, v *validator.Validator, userID int64) error
 	Update(category *model.Category, userID int64, v *validator.Validator) error
 	Delete(id int64, userID int64) error
 }
@@ -53,12 +53,12 @@ func (s *CategoryService) GetAll(name string, userID int64, f filters.Filters, v
 	return categories, metadata, nil
 }
 
-func (s *CategoryService) Insert(category *model.Category, v *validator.Validator) error {
+func (s *CategoryService) Insert(category *model.Category, v *validator.Validator, userID int64) error {
 	if category.ValidateCategory(v); !v.Valid() {
 		return e.ErrInvalidData
 	}
 
-	err := s.CategoryRepository.Insert(category)
+	err := s.CategoryRepository.Insert(category, userID)
 
 	if err != nil {
 		return err
