@@ -12,6 +12,14 @@ type CategoryService struct {
 	CategoryRepository repository.CategoryRepositoryIntercafe
 }
 
+type CategoryServiceInterface interface {
+	GetByID(id int64, userID int64) (*model.Category, error)
+	GetAll(name string, userID int64, f filters.Filters, v *validator.Validator) ([]*model.Category, filters.Metadata, error)
+	Insert(category *model.Category, v *validator.Validator) error
+	Update(category *model.Category, userID int64, v *validator.Validator) error
+	Delete(id int64, userID int64) error
+}
+
 func NewCategoryService(c repository.CategoryRepositoryIntercafe) *CategoryService {
 	return &CategoryService{
 		CategoryRepository: c,

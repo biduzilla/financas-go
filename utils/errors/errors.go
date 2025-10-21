@@ -52,15 +52,15 @@ func (e *ErrorResponse) HandlerErrorResponse(w http.ResponseWriter, r *http.Requ
 	case errors.Is(err, ErrRecordNotFound):
 		e.NotFoundResponse(w, r)
 
-	case errors.Is(err, ErrDuplicateEmail):
+	case errors.Is(err, ErrDuplicateEmail) && v != nil:
 		v.AddError("email", "a register with this email address already exists")
 		e.FailedValidationResponse(w, r, v.Errors)
 
-	case errors.Is(err, ErrDuplicateName):
+	case errors.Is(err, ErrDuplicateName) && v != nil:
 		v.AddError("name", "a register with this name already exists")
 		e.FailedValidationResponse(w, r, v.Errors)
 
-	case errors.Is(err, ErrDuplicatePhone):
+	case errors.Is(err, ErrDuplicatePhone) && v != nil:
 		v.AddError("phone", "a register with this phone number already exists")
 		e.FailedValidationResponse(w, r, v.Errors)
 
