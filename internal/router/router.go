@@ -18,11 +18,13 @@ import (
 type Router struct {
 	User           UserRoutesInterface
 	Auth           AuthRoutesInterface
+	Category       CategoryRouterIntercace
 	ErrResp        errors.ErrorResponseInterface
 	ContextGetUser func(r *http.Request) *model.User
 	ContextSetUser func(r *http.Request, user *model.User) *http.Request
 	Handler        *handler.Handler
 	Config         config.Config
+	m              middleware.MiddlewareInterface
 }
 
 func NewRouter(
@@ -30,37 +32,38 @@ func NewRouter(
 	logger *jsonlog.Logger,
 	contextGetUser func(r *http.Request) *model.User,
 	contextSetUser func(r *http.Request, user *model.User) *http.Request,
-	Config config.Config,
+	config config.Config,
 ) *Router {
 	e := errors.NewErrorResponse(logger)
-	h := handler.NewHandler(db, e, Config)
-
+	h := handler.NewHandler(db, e, config, contextGetUser)
+	m := middleware.New(
+		e,
+		contextGetUser,
+		contextSetUser,
+		h.Service.Auth,
+		h.Service.User,
+		config,
+	)
 	return &Router{
-		User:           NewUserRouter(h.User),
-		Auth:           NewAuthRouter(h.Auth),
 		ErrResp:        e,
 		ContextGetUser: contextGetUser,
 		ContextSetUser: contextSetUser,
 		Handler:        h,
+		m:              m,
+		User:           NewUserRouter(h.User),
+		Auth:           NewAuthRouter(h.Auth),
+		Category:       NewCategoryRouter(h.Category, m),
 	}
 }
 
 func (router *Router) RegisterRoutes() *chi.Mux {
 	r := chi.NewRouter()
-	m := middleware.New(
-		router.ErrResp,
-		router.ContextGetUser,
-		router.ContextSetUser,
-		router.Handler.Service.Auth,
-		router.Handler.Service.User,
-		router.Config,
-	)
 
-	r.Use(m.RecoverPanic)
-	r.Use(m.Metrics)
-	r.Use(m.RateLimit)
-	r.Use(m.EnableCORS)
-	r.Use(m.Authenticate)
+	r.Use(router.m.RecoverPanic)
+	r.Use(router.m.Metrics)
+	r.Use(router.m.RateLimit)
+	r.Use(router.m.EnableCORS)
+	r.Use(router.m.Authenticate)
 
 	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
 		router.ErrResp.NotFoundResponse(w, req)
@@ -74,10 +77,10 @@ func (router *Router) RegisterRoutes() *chi.Mux {
 		r.Mount("/debug/vars", expvar.Handler())
 		router.User.UserRoutes(r)
 		router.Auth.AuthRoutes(r)
+		router.Category.CategoryRoutes(r)
 
 		r.Route("/healthcheck", func(r chi.Router) {
-			r.Use(m.Authenticate)
-			r.Use(m.RequireActivatedUser)
+			r.Use(router.m.RequireActivatedUser)
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				env := map[string]any{
 					"status": "available",

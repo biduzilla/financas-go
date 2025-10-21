@@ -52,6 +52,16 @@ func New(
 	}
 }
 
+type MiddlewareInterface interface {
+	Metrics(next http.Handler) http.Handler
+	EnableCORS(next http.Handler) http.Handler
+	RequireAuthenticatedUser(next http.Handler) http.Handler
+	RequireActivatedUser(next http.Handler) http.Handler
+	Authenticate(next http.Handler) http.Handler
+	RateLimit(next http.Handler) http.Handler
+	RecoverPanic(next http.Handler) http.Handler
+}
+
 type metricsResponseWriter struct {
 	wrapped       http.ResponseWriter
 	statusCode    int
