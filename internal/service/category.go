@@ -27,12 +27,12 @@ func NewCategoryService(c repository.CategoryRepositoryIntercafe) *CategoryServi
 }
 
 func (s *CategoryService) GetByID(id int64, userID int64) (*model.Category, error) {
-	user, err := s.CategoryRepository.GetByID(id, userID)
+	c, err := s.CategoryRepository.GetByID(id, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, err
+	return c, err
 }
 
 func (s *CategoryService) GetAll(name string, userID int64, f filters.Filters, v *validator.Validator) ([]*model.Category, filters.Metadata, error) {

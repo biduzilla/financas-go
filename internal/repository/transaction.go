@@ -19,7 +19,7 @@ type TransactionRepositoryInterface interface {
 	GetAllByUserAndCategory(description string, userID int64, categoryID int64, startDate, endDate *time.Time, f filters.Filters) ([]*model.Transaction, filters.Metadata, error)
 	GetByID(id int64, userID int64) (*model.Transaction, error)
 	Insert(transaction *model.Transaction) error
-	Update(transaction *model.Transaction, userID int64) error
+	Update(transaction *model.Transaction) error
 	Delete(id int64, userID int64) error
 }
 
@@ -179,7 +179,7 @@ func (r *TransactionRepository) Insert(transaction *model.Transaction) error {
 	return nil
 }
 
-func (r *TransactionRepository) Update(transaction *model.Transaction, userID int64) error {
+func (r *TransactionRepository) Update(transaction *model.Transaction) error {
 	query := `
 	UPDATE transactions
 	SET user_id = $1, 
@@ -201,7 +201,7 @@ func (r *TransactionRepository) Update(transaction *model.Transaction, userID in
 		transaction.Description,
 		transaction.Amount,
 		transaction.ID,
-		userID,
+		transaction.User.ID,
 		transaction.Version,
 	}
 
