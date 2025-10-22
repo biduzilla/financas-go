@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 )
@@ -37,6 +38,19 @@ func ReadString(qs url.Values, key, defaultValue string) string {
 		return defaultValue
 	}
 	return s
+}
+
+func ReadDate(qs url.Values, key string, layout string) *time.Time {
+	s := qs.Get(key)
+	if s == "" {
+		return nil
+	}
+
+	t, err := time.Parse(layout, s)
+	if err != nil {
+		return nil
+	}
+	return &t
 }
 
 func ReadInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {

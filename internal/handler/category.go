@@ -67,7 +67,7 @@ func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		categoriesDTO = append(categoriesDTO, c.ToDTO())
 	}
 
-	h.respond(w, r, http.StatusOK, utils.Envelope{"categories": categoriesDTO, "metadata": metadata}, nil)
+	respond(w, r, http.StatusOK, utils.Envelope{"categories": categoriesDTO, "metadata": metadata}, nil, h.errorResponse)
 }
 
 func (h *CategoryHandler) GetById(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +86,7 @@ func (h *CategoryHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.User = user
-	h.respond(w, r, http.StatusOK, utils.Envelope{"category": c.ToDTO()}, nil)
+	respond(w, r, http.StatusOK, utils.Envelope{"category": c.ToDTO()}, nil, h.errorResponse)
 }
 
 func (h *CategoryHandler) Insert(w http.ResponseWriter, r *http.Request) {
@@ -108,11 +108,11 @@ func (h *CategoryHandler) Insert(w http.ResponseWriter, r *http.Request) {
 	headers := http.Header{"Location": {fmt.Sprintf("/v1/categories/%d", category.ID)}}
 
 	category.User = user
-	h.respond(w, r, http.StatusCreated, utils.Envelope{"category": category.ToDTO()}, headers)
+	respond(w, r, http.StatusCreated, utils.Envelope{"category": category.ToDTO()}, headers, h.errorResponse)
 }
 
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, ok := h.parseID(w, r)
+	id, ok := parseID(w, r, h.errorResponse)
 	if !ok {
 		return
 	}
@@ -136,11 +136,11 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	category.User = user
-	h.respond(w, r, http.StatusOK, utils.Envelope{"category": category.ToDTO()}, nil)
+	respond(w, r, http.StatusOK, utils.Envelope{"category": category.ToDTO()}, nil, h.errorResponse)
 }
 
 func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := h.parseID(w, r)
+	id, ok := parseID(w, r, h.errorResponse)
 	if !ok {
 		return
 	}
@@ -153,21 +153,5 @@ func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.respond(w, r, http.StatusOK, utils.Envelope{"message": "category successfully deleted"}, nil)
-}
-
-func (h *CategoryHandler) parseID(w http.ResponseWriter, r *http.Request) (int64, bool) {
-	id, err := utils.ReadIntParam(r, "id")
-	if err != nil {
-		h.errorResponse.BadRequestResponse(w, r, err)
-		return 0, false
-	}
-	return id, true
-}
-
-func (h *CategoryHandler) respond(w http.ResponseWriter, r *http.Request, status int, data utils.Envelope, headers http.Header) {
-	err := utils.WriteJSON(w, status, data, headers)
-	if err != nil {
-		h.errorResponse.ServerErrorResponse(w, r, err)
-	}
+	respond(w, r, http.StatusOK, utils.Envelope{"message": "category successfully deleted"}, nil, h.errorResponse)
 }
