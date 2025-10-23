@@ -11,22 +11,24 @@ import (
 )
 
 type Handler struct {
-	User     UserHandlerInterface
-	Auth     AuthHandlerInterface
-	Category CategoryHandlerInterface
-	errResp  errors.ErrorResponseInterface
-	Service  *service.Service
+	User        UserHandlerInterface
+	Auth        AuthHandlerInterface
+	Category    CategoryHandlerInterface
+	Transaction TransactionHandlerInterface
+	errResp     errors.ErrorResponseInterface
+	Service     *service.Service
 }
 
 func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config config.Config, ContextGetUser func(r *http.Request) *model.User) *Handler {
 	service := service.NewService(db, config)
 
 	return &Handler{
-		User:     NewUserHandler(service.User, errResp),
-		Auth:     NewAuthHandler(service.Auth, errResp),
-		Category: NewCategoryHandler(service.Category, ContextGetUser, errResp),
-		errResp:  errResp,
-		Service:  service,
+		User:        NewUserHandler(service.User, errResp),
+		Auth:        NewAuthHandler(service.Auth, errResp),
+		Category:    NewCategoryHandler(service.Category, ContextGetUser, errResp),
+		Transaction: NewTransactionHandler(service.Transaction, errResp, ContextGetUser, service.Category),
+		errResp:     errResp,
+		Service:     service,
 	}
 }
 
