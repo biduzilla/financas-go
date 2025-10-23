@@ -153,5 +153,5 @@ func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond(w, r, http.StatusOK, utils.Envelope{"message": "category successfully deleted"}, nil, h.errorResponse)
+	respond(w, r, http.StatusNoContent, utils.Envelope{"message": "category successfully deleted"}, nil, h.errorResponse)
 }

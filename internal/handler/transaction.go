@@ -7,6 +7,7 @@ import (
 	"financas/utils"
 	e "financas/utils/errors"
 	"financas/utils/validator"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -16,6 +17,14 @@ type TransactionHandler struct {
 	category       service.CategoryServiceInterface
 	errRsp         e.ErrorResponseInterface
 	contextGetUser func(r *http.Request) *model.User
+}
+
+type TransactionHandlerInterface interface {
+	GetAllByUserAndCategory(w http.ResponseWriter, r *http.Request)
+	GetByID(w http.ResponseWriter, r *http.Request)
+	Save(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
+	DeleteByID(w http.ResponseWriter, r *http.Request)
 }
 
 func NewTransactionHandler(
@@ -79,7 +88,6 @@ func (h *TransactionHandler) GetAllByUserAndCategory(w http.ResponseWriter, r *h
 			h.errRsp.ServerErrorResponse(w, r, err)
 			return
 		}
-		t.User = user
 		transactionsDTO = append(transactionsDTO, t.ToDTO())
 	}
 
@@ -100,17 +108,69 @@ func (h *TransactionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := h.category.GetByID(t.ID, user.ID)
+	h.prepareTransactionForResponse(t, user)
 
-	if err != nil {
-		h.errRsp.HandlerErrorResponse(w, r, err, nil)
+	respond(w, r, http.StatusOK, utils.Envelope{"transaction": t.ToDTO()}, nil, h.errRsp)
+}
+
+func (h *TransactionHandler) Save(w http.ResponseWriter, r *http.Request) {
+	var dto = &model.TransactionDTO{}
+	if err := utils.ReadJSON(w, r, dto); err != nil {
+		h.errRsp.BadRequestResponse(w, r, err)
 		return
 	}
 
-	t.User = user
-	t.Category = c
+	v := validator.New()
+	t := dto.ToModel()
 
-	respond(w, r, http.StatusOK, utils.Envelope{"transaction": t.ToDTO()}, nil, h.errRsp)
+	err := h.transaction.Save(v, t)
+	if err != nil {
+		h.errRsp.HandlerErrorResponse(w, r, err, v)
+		return
+	}
+
+	user := h.contextGetUser(r)
+
+	h.prepareTransactionForResponse(t, user)
+
+	headers := http.Header{"Location": {fmt.Sprintf("/v1/transactions/%d", t.ID)}}
+	respond(w, r, http.StatusCreated, utils.Envelope{"category": t.ToDTO()}, headers, h.errRsp)
+}
+
+func (h *TransactionHandler) Update(w http.ResponseWriter, r *http.Request) {
+	var dto = &model.TransactionDTO{}
+	if err := utils.ReadJSON(w, r, dto); err != nil {
+		h.errRsp.BadRequestResponse(w, r, err)
+		return
+	}
+
+	v := validator.New()
+	t := dto.ToModel()
+	user := h.contextGetUser(r)
+
+	err := h.transaction.Update(v, t, user.ID)
+	if err != nil {
+		h.errRsp.HandlerErrorResponse(w, r, err, v)
+		return
+	}
+
+	h.prepareTransactionForResponse(t, user)
+
+	respond(w, r, http.StatusOK, utils.Envelope{"category": t.ToDTO()}, nil, h.errRsp)
+}
+
+func (h *TransactionHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r, h.errRsp)
+	if !ok {
+		return
+	}
+
+	user := h.contextGetUser(r)
+	if err := h.transaction.Delete(id, user.ID); err != nil {
+		h.errRsp.HandlerErrorResponse(w, r, err, nil)
+		return
+	}
+	respond(w, r, http.StatusNoContent, utils.Envelope{"message": "transaction successfully deleted"}, nil, h.errRsp)
 }
 
 func (h *TransactionHandler) prepareTransactionForResponse(transaction *model.Transaction, user *model.User) error {
