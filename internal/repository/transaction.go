@@ -61,7 +61,7 @@ func (r *TransactionRepository) GetAllByUserAndCategory(description string, user
 	end := sql.NullTime{}
 	if endDate != nil {
 		end.Valid = true
-		end.Time = *endDate
+		end.Time = endDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
 	}
 	args := []any{
 		description,
@@ -151,7 +151,7 @@ func (r *TransactionRepository) Insert(transaction *model.Transaction) error {
 			user_id, 
 			category_id, 
 			description, 
-			amount, 
+			amount
 	)
 	VALUES ($1, $2, $3, $4)
 	RETURNING id,created_at, version
