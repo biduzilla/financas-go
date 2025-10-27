@@ -11,16 +11,19 @@ type Service struct {
 	Auth        AuthServiceInterface
 	Category    CategoryServiceInterface
 	Transaction TransactionServiceInterface
+	Report      ReportServiceInterface
 }
 
 func NewService(db *sql.DB, config config.Config) *Service {
 	repository := repository.NewRepository(db)
 	userService := NewUserService(repository.User)
-
+	categoryService := NewCategoryService(repository.Category)
+	transactionService := NewTransactionService(repository.Transaction)
 	return &Service{
 		User:        userService,
 		Auth:        NewAuthService(userService, config),
-		Category:    NewCategoryService(repository.Category),
-		Transaction: NewTransactionService(repository.Transaction),
+		Category:    categoryService,
+		Transaction: transactionService,
+		Report:      NewReportService(transactionService, categoryService),
 	}
 }

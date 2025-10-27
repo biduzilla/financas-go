@@ -42,7 +42,9 @@ func (r *TransactionRepository) GetAllByUserAndCategory(description string, user
 	t.amount
 	FROM transactions t
 	WHERE (to_tsvector('simple', t.description) @@ plainto_tsquery('simple', $1) OR $1 = '')
-	AND t.user_id = $2 AND t.deleted = false AND t.category_id = $3
+	AND t.user_id = $2 
+	AND t.deleted = false 
+	AND ($3 = 0 OR t.category_id = $3)
 	AND ($4::timestamptz IS NULL OR t.created_at >= $4::timestamptz)
 	AND ($5::timestamptz IS NULL OR t.created_at <= $5::timestamptz)
 	ORDER BY %s %s, id ASC
