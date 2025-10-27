@@ -7,13 +7,16 @@ import (
 	"financas/internal/service"
 	"financas/utils"
 	"financas/utils/errors"
+	"financas/utils/validator"
 	"net/http"
+	"time"
 )
 
 type Handler struct {
 	User        UserHandlerInterface
 	Auth        AuthHandlerInterface
 	Category    CategoryHandlerInterface
+	Report      ReportHandlerInterface
 	Transaction TransactionHandlerInterface
 	errResp     errors.ErrorResponseInterface
 	Service     *service.Service
@@ -27,6 +30,7 @@ func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config config
 		Auth:        NewAuthHandler(service.Auth, errResp),
 		Category:    NewCategoryHandler(service.Category, ContextGetUser, errResp),
 		Transaction: NewTransactionHandler(service.Transaction, errResp, ContextGetUser, service.Category),
+		Report:      NewReportHandler(service.Report, errResp, ContextGetUser),
 		errResp:     errResp,
 		Service:     service,
 	}
@@ -57,4 +61,29 @@ func respond(
 	if err != nil {
 		errRsp.ServerErrorResponse(w, r, err)
 	}
+}
+
+func parseDateRange(r *http.Request, v *validator.Validator) (time.Time, time.Time, error) {
+	now := time.Now().UTC()
+	qs := r.URL.Query()
+
+	endDatePtr := utils.ReadDate(qs, "end_date", "2006-01-02")
+	startDatePtr := utils.ReadDate(qs, "start_date", "2006-01-02")
+
+	endDate := now
+	if endDatePtr != nil {
+		endDate = *endDatePtr
+	}
+
+	startDate := endDate.AddDate(0, 0, -30)
+	if startDatePtr != nil {
+		startDate = *startDatePtr
+	}
+
+	if startDatePtr != nil && endDatePtr != nil && startDate.After(endDate) {
+		v.AddError("date_range", "start_date cannot be after end_date")
+		return time.Time{}, time.Time{}, errors.ErrInvalidData
+	}
+
+	return startDate, endDate, nil
 }
