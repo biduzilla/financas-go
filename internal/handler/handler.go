@@ -70,17 +70,17 @@ func parseDateRange(r *http.Request, v *validator.Validator) (time.Time, time.Ti
 	endDatePtr := utils.ReadDate(qs, "end_date", "2006-01-02")
 	startDatePtr := utils.ReadDate(qs, "start_date", "2006-01-02")
 
-	endDate := now
+	endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.UTC)
 	if endDatePtr != nil {
-		endDate = *endDatePtr
+		endDate = time.Date(endDatePtr.Year(), endDatePtr.Month(), endDatePtr.Day(), 23, 59, 59, 0, time.UTC)
 	}
 
-	startDate := endDate.AddDate(0, 0, -30)
+	startDate := endDate.AddDate(0, 0, -30) // 30 dias antes da data final
 	if startDatePtr != nil {
-		startDate = *startDatePtr
+		startDate = time.Date(startDatePtr.Year(), startDatePtr.Month(), startDatePtr.Day(), 0, 0, 0, 0, time.UTC)
 	}
 
-	if startDatePtr != nil && endDatePtr != nil && startDate.After(endDate) {
+	if startDate.After(endDate) {
 		v.AddError("date_range", "start_date cannot be after end_date")
 		return time.Time{}, time.Time{}, errors.ErrInvalidData
 	}

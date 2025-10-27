@@ -3,7 +3,6 @@ package service
 import (
 	"financas/internal/model"
 	"financas/internal/model/filters"
-	e "financas/utils/errors"
 	"financas/utils/validator"
 	"time"
 )
@@ -14,10 +13,10 @@ type ReportService struct {
 }
 
 type ReportServiceInterface interface {
-	GetFinancialSummary(v *validator.Validator, userID int64, startDate, endDate time.Time) (*model.FinancialSummary, error)
-	GetCategoryReport(v *validator.Validator, userID int64, startDate, endDate time.Time) ([]model.CategorySummary, error)
-	GetIncomeVsExpenses(v *validator.Validator, userID int64, startDate, endDate time.Time) (map[string]float64, error)
-	GetTopCategories(v *validator.Validator, userID int64, startDate, endDate time.Time, limit int, categoryType model.TypeCategoria) ([]model.CategorySummary, error)
+	GetFinancialSummary(v *validator.Validator, userID int64, startDate, endDate *time.Time) (*model.FinancialSummary, error)
+	GetCategoryReport(v *validator.Validator, userID int64, startDate, endDate *time.Time) ([]model.CategorySummary, error)
+	GetIncomeVsExpenses(v *validator.Validator, userID int64, startDate, endDate *time.Time) (map[string]float64, error)
+	GetTopCategories(v *validator.Validator, userID int64, startDate, endDate *time.Time, limit int, categoryType model.TypeCategoria) ([]model.CategorySummary, error)
 }
 
 func NewReportService(transactionSvc TransactionServiceInterface, categorySvc CategoryServiceInterface) *ReportService {
@@ -27,19 +26,20 @@ func NewReportService(transactionSvc TransactionServiceInterface, categorySvc Ca
 	}
 }
 
-func (s *ReportService) GetFinancialSummary(v *validator.Validator, userID int64, startDate, endDate time.Time) (*model.FinancialSummary, error) {
-	if startDate.After(endDate) {
-		return nil, e.ErrStartDateAfterEndDate
-	}
-
+func (s *ReportService) GetFinancialSummary(v *validator.Validator, userID int64, startDate, endDate *time.Time) (*model.FinancialSummary, error) {
 	transactions, _, err := s.transaction.GetAllByUserAndCategory(
 		v,
 		"",
 		userID,
 		0,
-		&startDate,
-		&endDate,
-		filters.Filters{Page: 1, PageSize: 1000},
+		startDate,
+		endDate,
+		filters.Filters{
+			Page:         1,
+			PageSize:     100,
+			Sort:         "created_at",
+			SortSafelist: []string{"created_at", "amount", "description"},
+		},
 	)
 
 	if err != nil {
@@ -55,10 +55,11 @@ func (s *ReportService) GetFinancialSummary(v *validator.Validator, userID int64
 		if err != nil {
 			return nil, err
 		}
-		if category.Type == model.RECEITA {
+		switch category.Type {
+		case model.RECEITA:
 			totalIncome += amount
-		} else if category.Type == model.DESPESA {
-			totalExpenses -= amount
+		case model.DESPESA:
+			totalExpenses += amount
 		}
 
 		if _, exist := categoryTotals[category.ID]; !exist {
@@ -101,16 +102,16 @@ func (s *ReportService) GetFinancialSummary(v *validator.Validator, userID int64
 		CategorySummary: categorySummary,
 		MonthlyTrends:   monthlyTrends,
 		Period: model.PeriodSummary{
-			StartDate: startDate,
-			EndDate:   endDate,
-			Days:      int(endDate.Sub(startDate).Hours() / 24),
+			StartDate: *startDate,
+			EndDate:   *endDate,
+			Days:      int(endDate.Sub(*startDate).Hours() / 24),
 		},
 	}
 
 	return summary, nil
 }
 
-func (s *ReportService) GetCategoryReport(v *validator.Validator, userID int64, startDate, endDate time.Time) ([]model.CategorySummary, error) {
+func (s *ReportService) GetCategoryReport(v *validator.Validator, userID int64, startDate, endDate *time.Time) ([]model.CategorySummary, error) {
 	summary, err := s.GetFinancialSummary(v, userID, startDate, endDate)
 	if err != nil {
 		return nil, err
@@ -133,7 +134,12 @@ func (s *ReportService) generateMonthlyTrends(v *validator.Validator, userID int
 			0,
 			&monthStart,
 			&monthEnd,
-			filters.Filters{Page: 1, PageSize: 1000},
+			filters.Filters{
+				Page:         1,
+				PageSize:     100,
+				Sort:         "created_at",
+				SortSafelist: []string{"created_at", "amount", "description"},
+			},
 		)
 
 		if err != nil {
@@ -162,7 +168,7 @@ func (s *ReportService) generateMonthlyTrends(v *validator.Validator, userID int
 	return trends, nil
 }
 
-func (s *ReportService) GetIncomeVsExpenses(v *validator.Validator, userID int64, startDate, endDate time.Time) (map[string]float64, error) {
+func (s *ReportService) GetIncomeVsExpenses(v *validator.Validator, userID int64, startDate, endDate *time.Time) (map[string]float64, error) {
 	summary, err := s.GetFinancialSummary(v, userID, startDate, endDate)
 	if err != nil {
 		return nil, err
@@ -175,8 +181,7 @@ func (s *ReportService) GetIncomeVsExpenses(v *validator.Validator, userID int64
 	}, nil
 }
 
-// GetTopCategories retorna as top N categorias por valor
-func (s *ReportService) GetTopCategories(v *validator.Validator, userID int64, startDate, endDate time.Time, limit int, categoryType model.TypeCategoria) ([]model.CategorySummary, error) {
+func (s *ReportService) GetTopCategories(v *validator.Validator, userID int64, startDate, endDate *time.Time, limit int, categoryType model.TypeCategoria) ([]model.CategorySummary, error) {
 	allCategories, err := s.GetCategoryReport(v, userID, startDate, endDate)
 	if err != nil {
 		return nil, err
