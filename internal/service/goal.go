@@ -15,8 +15,8 @@ type GoalService struct {
 type GoalServiceInterface interface {
 	GetAllByUserId(name string, userID int64, f filters.Filters, v *validator.Validator) ([]*model.Goal, filters.Metadata, error)
 	GetById(id, userID int64) (*model.Goal, error)
-	Create(goal *model.Goal) error
-	Update(goal *model.Goal, userID int64) error
+	Create(v *validator.Validator, goal *model.Goal) error
+	Update(v *validator.Validator, goal *model.Goal, userID int64) error
 	Delete(id, userID int64) error
 }
 
@@ -52,7 +52,11 @@ func (s *GoalService) GetById(id, userID int64) (*model.Goal, error) {
 	return goal, nil
 }
 
-func (s *GoalService) Create(goal *model.Goal) error {
+func (s *GoalService) Create(v *validator.Validator, goal *model.Goal) error {
+	if goal.ValidateGoal(v); !v.Valid() {
+		return e.ErrInvalidData
+	}
+
 	err := s.Goal.Create(goal)
 	if err != nil {
 		return err
@@ -60,7 +64,11 @@ func (s *GoalService) Create(goal *model.Goal) error {
 	return nil
 }
 
-func (s *GoalService) Update(goal *model.Goal, userID int64) error {
+func (s *GoalService) Update(v *validator.Validator, goal *model.Goal, userID int64) error {
+	if goal.ValidateGoal(v); !v.Valid() {
+		return e.ErrInvalidData
+	}
+
 	err := s.Goal.Update(goal, userID)
 	if err != nil {
 		return err
