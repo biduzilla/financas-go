@@ -191,3 +191,8 @@ func (g *Goal) ValidateGoal(v *validator.Validator) {
 	v.Check(g.Color != "", "color", "must be provided")
 	v.Check(g.Amount != 0, "amount", "must be provided")
 }
+
+func (g *GoalProgress) ValidateGoal(v *validator.Validator) {
+	v.Check(g.Current != 0, "current", "must be provided")
+	v.Check(g.Goal != nil, "goal", "must be provided")
+}
