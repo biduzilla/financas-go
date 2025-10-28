@@ -12,6 +12,7 @@ type Service struct {
 	Category    CategoryServiceInterface
 	Transaction TransactionServiceInterface
 	Report      ReportServiceInterface
+	Goal        GoalServiceInterface
 }
 
 func NewService(db *sql.DB, config config.Config) *Service {
@@ -25,5 +26,6 @@ func NewService(db *sql.DB, config config.Config) *Service {
 		Category:    categoryService,
 		Transaction: transactionService,
 		Report:      NewReportService(transactionService, categoryService),
+		Goal:        NewGoalService(repository.Goal),
 	}
 }

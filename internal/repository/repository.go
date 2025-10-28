@@ -8,6 +8,7 @@ type Repository struct {
 	User        UserRepository
 	Category    CategoryRepositoryIntercafe
 	Transaction TransactionRepositoryInterface
+	Goal        GoalRepositoryInterface
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -15,5 +16,6 @@ func NewRepository(db *sql.DB) *Repository {
 		User:        NewUserRepository(db),
 		Category:    NewCategoryRepository(db),
 		Transaction: NewTransactionRepository(db),
+		Goal:        NewGoalRepository(db),
 	}
 }

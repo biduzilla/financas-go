@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"financas/internal/model"
+	"financas/internal/model/filters"
 	e "financas/utils/errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -15,8 +17,103 @@ type GoalRepository struct {
 	db *sql.DB
 }
 
+type GoalRepositoryInterface interface {
+	GetAllByUserId(name string, userID int64, f filters.Filters) ([]*model.Goal, filters.Metadata, error)
+	GetById(id, idUser int64) (*model.Goal, error)
+	Create(goal *model.Goal) error
+	Update(goal *model.Goal, idUser int64) error
+	Delete(id, idUser int64) error
+}
+
 func NewGoalRepository(db *sql.DB) *GoalRepository {
 	return &GoalRepository{db: db}
+}
+
+func (r *GoalRepository) GetAllByUserId(name string, userID int64, f filters.Filters) ([]*model.Goal, filters.Metadata, error) {
+	query := fmt.Sprintf(`
+	SELECT 
+		count(*) OVER(),
+		id, 
+		name, 
+		description,  
+		user_id,
+		deadline, 
+		amount, 
+		current,
+		status,
+		version,
+		created_at,
+		deleted,
+		u.created_at as u_created_at, 
+		u.name as u_name,
+		u.phone as u_phone,
+		u.email as u_email,
+		u.cod as u_cod,
+		u.activated as u_activated,
+		u.version as u_version
+	FROM goals
+	inner join users u on (goals.user_id = u.id)
+	WHERE (to_tsvector('simple', name) @@ plainto_tsquery('simple', $1) OR $1 = '')
+	AND user_id = $2 AND deleted = false
+	ORDER BY %s %s, id ASC
+	LIMIT $3 OFFSET $4
+	`, f.SortColumn(), f.SortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{name, userID, f.Limit(), f.Offset()}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+
+	if err != nil {
+		return nil, filters.Metadata{}, err
+	}
+
+	defer rows.Close()
+
+	var goals []*model.Goal
+	var totalRecords int
+
+	for rows.Next() {
+		goal := &model.Goal{
+			User: &model.User{},
+		}
+		err := rows.Scan(
+			&totalRecords,
+			&goal.ID,
+			&goal.Name,
+			&goal.Description,
+			&goal.User.ID,
+			&goal.Deadline,
+			&goal.Amount,
+			&goal.Current,
+			&goal.Status,
+			&goal.Version,
+			&goal.CreatedAt,
+			&goal.Deleted,
+			&goal.User.CreatedAt,
+			&goal.User.Name,
+			&goal.User.Phone,
+			&goal.User.Email,
+			&goal.User.Cod,
+			&goal.User.Activated,
+			&goal.User.Version,
+		)
+
+		if err != nil {
+			return nil, filters.Metadata{}, err
+		}
+
+		goals = append(goals, goal)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, filters.Metadata{}, err
+	}
+
+	metaData := filters.CalculateMetadata(totalRecords, f.Page, f.PageSize)
+	return goals, metaData, nil
 }
 
 func (r *GoalRepository) GetById(id, idUser int64) (*model.Goal, error) {
@@ -40,7 +137,7 @@ func (r *GoalRepository) GetById(id, idUser int64) (*model.Goal, error) {
 		u.email as u_email,
 		u.cod as u_cod,
 		u.activated as u_activated,
-		version
+		u.version as u_version
 	from goals
 	inner join users u on (goals.user_id = u.id)
 	where 
@@ -72,6 +169,7 @@ func (r *GoalRepository) GetById(id, idUser int64) (*model.Goal, error) {
 		&goal.User.Email,
 		&goal.User.Cod,
 		&goal.User.Activated,
+		&goal.User.Version,
 	)
 
 	if err != nil {
