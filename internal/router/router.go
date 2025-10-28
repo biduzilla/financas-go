@@ -18,8 +18,9 @@ import (
 type Router struct {
 	user           UserRoutesInterface
 	auth           AuthRoutesInterface
-	category       CategoryRouterIntercace
+	category       CategoryRouterInterface
 	transaction    TransactionRouterInterface
+	goal           GoalRouterInterface
 	report         ReportRouterInterface
 	ErrResp        errors.ErrorResponseInterface
 	ContextGetUser func(r *http.Request) *model.User
@@ -57,6 +58,7 @@ func NewRouter(
 		category:       NewCategoryRouter(h.Category, m),
 		transaction:    NewTransactionRouter(h.Transaction, m),
 		report:         NewReportRouter(h.Report, m),
+		goal:           NewGoalRouter(h.Goal, m),
 	}
 }
 
@@ -84,6 +86,7 @@ func (router *Router) RegisterRoutes() *chi.Mux {
 		router.category.CategoryRoutes(r)
 		router.transaction.TransactionRoutes(r)
 		router.report.ReportRoutes(r)
+		router.goal.GoalRoutes(r)
 
 		r.Route("/healthcheck", func(r chi.Router) {
 			r.Use(router.m.RequireActivatedUser)

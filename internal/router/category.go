@@ -19,7 +19,7 @@ func NewCategoryRouter(h handler.CategoryHandlerInterface, middleware middleware
 	}
 }
 
-type CategoryRouterIntercace interface {
+type CategoryRouterInterface interface {
 	CategoryRoutes(r chi.Router)
 }
 

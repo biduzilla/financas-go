@@ -16,6 +16,7 @@ type Handler struct {
 	Category    CategoryHandlerInterface
 	Report      ReportHandlerInterface
 	Transaction TransactionHandlerInterface
+	Goal        GoalHandlerInterface
 	errResp     errors.ErrorResponseInterface
 	Service     *service.Service
 }
@@ -24,13 +25,14 @@ func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config config
 	service := service.NewService(db, config)
 
 	return &Handler{
+		errResp:     errResp,
+		Service:     service,
 		User:        NewUserHandler(service.User, errResp),
 		Auth:        NewAuthHandler(service.Auth, errResp),
 		Category:    NewCategoryHandler(service.Category, ContextGetUser, errResp),
 		Transaction: NewTransactionHandler(service.Transaction, errResp, ContextGetUser, service.Category),
 		Report:      NewReportHandler(service.Report, errResp, ContextGetUser),
-		errResp:     errResp,
-		Service:     service,
+		Goal:        NewGoalHandler(service.Goal, errResp, ContextGetUser),
 	}
 }
 
