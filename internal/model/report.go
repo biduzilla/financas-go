@@ -12,10 +12,10 @@ type FinancialSummary struct {
 }
 
 type CategorySummary struct {
-	Category   *Category `json:"category"`
-	Total      float64   `json:"total"`
-	Count      int       `json:"count"`
-	Percentage float64   `json:"percentage"`
+	Category   *CategoryDTO `json:"category"`
+	Total      float64      `json:"total"`
+	Count      int          `json:"count"`
+	Percentage float64      `json:"percentage"`
 }
 
 type MonthlyTrend struct {

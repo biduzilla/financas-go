@@ -7,9 +7,7 @@ import (
 	"financas/internal/service"
 	"financas/utils"
 	"financas/utils/errors"
-	"financas/utils/validator"
 	"net/http"
-	"time"
 )
 
 type Handler struct {
@@ -61,29 +59,4 @@ func respond(
 	if err != nil {
 		errRsp.ServerErrorResponse(w, r, err)
 	}
-}
-
-func parseDateRange(r *http.Request, v *validator.Validator) (time.Time, time.Time, error) {
-	now := time.Now().UTC()
-	qs := r.URL.Query()
-
-	endDatePtr := utils.ReadDate(qs, "end_date", "2006-01-02")
-	startDatePtr := utils.ReadDate(qs, "start_date", "2006-01-02")
-
-	endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.UTC)
-	if endDatePtr != nil {
-		endDate = time.Date(endDatePtr.Year(), endDatePtr.Month(), endDatePtr.Day(), 23, 59, 59, 0, time.UTC)
-	}
-
-	startDate := endDate.AddDate(0, 0, -30) // 30 dias antes da data final
-	if startDatePtr != nil {
-		startDate = time.Date(startDatePtr.Year(), startDatePtr.Month(), startDatePtr.Day(), 0, 0, 0, 0, time.UTC)
-	}
-
-	if startDate.After(endDate) {
-		v.AddError("date_range", "start_date cannot be after end_date")
-		return time.Time{}, time.Time{}, errors.ErrInvalidData
-	}
-
-	return startDate, endDate, nil
 }

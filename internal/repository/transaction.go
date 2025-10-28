@@ -39,8 +39,15 @@ func (r *TransactionRepository) GetAllByUserAndCategory(description string, user
 	t.user_id, 
 	t.category_id, 
 	t.description, 
-	t.amount
+	t.amount,
+	c.created_at as c_created_at,
+	c.name,
+	c.type,
+	c.color,
+	c.user_id,
+	c.version
 	FROM transactions t
+	INNER JOIN categories c ON (t.category_id = c.id)
 	WHERE (to_tsvector('simple', t.description) @@ plainto_tsquery('simple', $1) OR $1 = '')
 	AND t.user_id = $2 
 	AND t.deleted = false 
@@ -100,6 +107,12 @@ func (r *TransactionRepository) GetAllByUserAndCategory(description string, user
 			&transaction.Category.ID,
 			&transaction.Description,
 			&transaction.Amount,
+			&transaction.Category.CreatedAt,
+			&transaction.Category.Name,
+			&transaction.Category.Type,
+			&transaction.Category.Color,
+			&transaction.Category.User.ID,
+			&transaction.Category.Version,
 		)
 		if err != nil {
 			return nil, filters.Metadata{}, err
@@ -112,8 +125,23 @@ func (r *TransactionRepository) GetAllByUserAndCategory(description string, user
 
 func (r *TransactionRepository) GetByID(id int64, userID int64) (*model.Transaction, error) {
 	query := `
-	SELECT id, created_at, deleted, version, user_id, category_id, description, amount
-	FROM transactions
+	SELECT 
+		id, 
+		created_at, 
+		deleted, 
+		version, 
+		user_id, 
+		category_id, 
+		description, 
+		amount,
+		c.created_at as c_created_at,
+		c.name,
+		c.type,
+		c.color,
+		c.user_id,
+		c.version
+	FROM transactions t
+	INNER JOIN categories c ON (t.category_id = c.id)
 	WHERE id = $1 AND user_id = $2 AND deleted = false
 	`
 
@@ -133,6 +161,12 @@ func (r *TransactionRepository) GetByID(id int64, userID int64) (*model.Transact
 		&tx.Category.ID,
 		&tx.Description,
 		&tx.Amount,
+		&tx.Category.CreatedAt,
+		&tx.Category.Name,
+		&tx.Category.Type,
+		&tx.Category.Color,
+		&tx.Category.User.ID,
+		&tx.Category.Version,
 	)
 
 	if err != nil {

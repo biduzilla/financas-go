@@ -30,5 +30,6 @@ func (router *ReportRouter) ReportRoutes(r chi.Router) {
 		r.Get("/summary", router.handler.GetFinancialSummaryHandler)
 		r.Get("/categories", router.handler.GetCategoryReportHandler)
 		r.Get("/top-categories", router.handler.GetTopCategoriesHandler)
+		r.Get("/income-vs-expenses", router.handler.GetIncomeVsExpensesHandler)
 	})
 }
