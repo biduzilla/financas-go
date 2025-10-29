@@ -11,28 +11,30 @@ import (
 )
 
 type Handler struct {
-	User        UserHandlerInterface
-	Auth        AuthHandlerInterface
-	Category    CategoryHandlerInterface
-	Report      ReportHandlerInterface
-	Transaction TransactionHandlerInterface
-	Goal        GoalHandlerInterface
-	errResp     errors.ErrorResponseInterface
-	Service     *service.Service
+	User         UserHandlerInterface
+	Auth         AuthHandlerInterface
+	Category     CategoryHandlerInterface
+	Report       ReportHandlerInterface
+	Transaction  TransactionHandlerInterface
+	Goal         GoalHandlerInterface
+	GoalProgress GoalProgressHandlerInterface
+	errResp      errors.ErrorResponseInterface
+	Service      *service.Service
 }
 
 func NewHandler(db *sql.DB, errResp errors.ErrorResponseInterface, config config.Config, ContextGetUser func(r *http.Request) *model.User) *Handler {
 	service := service.NewService(db, config)
 
 	return &Handler{
-		errResp:     errResp,
-		Service:     service,
-		User:        NewUserHandler(service.User, errResp),
-		Auth:        NewAuthHandler(service.Auth, errResp),
-		Category:    NewCategoryHandler(service.Category, ContextGetUser, errResp),
-		Transaction: NewTransactionHandler(service.Transaction, errResp, ContextGetUser, service.Category),
-		Report:      NewReportHandler(service.Report, errResp, ContextGetUser),
-		Goal:        NewGoalHandler(service.Goal, errResp, ContextGetUser),
+		errResp:      errResp,
+		Service:      service,
+		User:         NewUserHandler(service.User, errResp),
+		Auth:         NewAuthHandler(service.Auth, errResp),
+		Category:     NewCategoryHandler(service.Category, ContextGetUser, errResp),
+		Transaction:  NewTransactionHandler(service.Transaction, errResp, ContextGetUser, service.Category),
+		Report:       NewReportHandler(service.Report, errResp, ContextGetUser),
+		Goal:         NewGoalHandler(service.Goal, errResp, ContextGetUser),
+		GoalProgress: NewGoalProgressHandler(service.GoalProgress, errResp, ContextGetUser),
 	}
 }
 

@@ -21,6 +21,7 @@ type Router struct {
 	category       CategoryRouterInterface
 	transaction    TransactionRouterInterface
 	goal           GoalRouterInterface
+	goalProgress   GoalProgressRouterInterface
 	report         ReportRouterInterface
 	ErrResp        errors.ErrorResponseInterface
 	ContextGetUser func(r *http.Request) *model.User
@@ -87,6 +88,7 @@ func (router *Router) RegisterRoutes() *chi.Mux {
 		router.transaction.TransactionRoutes(r)
 		router.report.ReportRoutes(r)
 		router.goal.GoalRoutes(r)
+		router.goalProgress.GoalProgressRoutes(r)
 
 		r.Route("/healthcheck", func(r chi.Router) {
 			r.Use(router.m.RequireActivatedUser)
