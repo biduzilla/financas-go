@@ -14,7 +14,7 @@ type GoalProgressRepository struct {
 }
 
 type GoalProgressRepositoryInterface interface {
-	GetGoalProgressIDGoal(userID, goalID int) ([]*model.GoalProgress, error)
+	GetGoalProgressIDGoal(userID, goalID int64) ([]*model.GoalProgress, error)
 	Insert(gP *model.GoalProgress) error
 	Update(gP *model.GoalProgress, userID int64) error
 	Delete(goalProgressID, userID int64) error
@@ -25,7 +25,7 @@ func NewGoalProgressRepository(db *sql.DB) *GoalProgressRepository {
 }
 
 func (r *GoalProgressRepository) GetGoalProgressIDGoal(
-	userID, goalID int,
+	userID, goalID int64,
 ) ([]*model.GoalProgress, error) {
 	query := `
 	SELECT

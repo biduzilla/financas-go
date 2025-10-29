@@ -12,7 +12,7 @@ type GoalProgressService struct {
 }
 
 type GoalProgressServiceInterface interface {
-	GetGoalProgressIDGoal(userID, goalID int) ([]*model.GoalProgress, error)
+	GetGoalProgressIDGoal(userID, goalID int64) ([]*model.GoalProgress, error)
 	Insert(v *validator.Validator, gP *model.GoalProgress) error
 	Update(v *validator.Validator, gP *model.GoalProgress, userID int64) error
 	Delete(goalProgressID, userID int64) error
@@ -22,7 +22,7 @@ func NewGoalProgressService(gP repository.GoalProgressRepositoryInterface) *Goal
 	return &GoalProgressService{gP: gP}
 }
 
-func (s *GoalProgressService) GetGoalProgressIDGoal(userID, goalID int) ([]*model.GoalProgress, error) {
+func (s *GoalProgressService) GetGoalProgressIDGoal(userID, goalID int64) ([]*model.GoalProgress, error) {
 	gPs, err := s.gP.GetGoalProgressIDGoal(userID, goalID)
 	if err != nil {
 		return nil, err
