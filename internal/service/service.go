@@ -21,13 +21,15 @@ func NewService(db *sql.DB, config config.Config) *Service {
 	userService := NewUserService(repository.User)
 	categoryService := NewCategoryService(repository.Category)
 	transactionService := NewTransactionService(repository.Transaction)
+	goalService := NewGoalService(repository.Goal)
+
 	return &Service{
 		User:         userService,
 		Auth:         NewAuthService(userService, config),
 		Category:     categoryService,
 		Transaction:  transactionService,
 		Report:       NewReportService(transactionService, categoryService),
-		Goal:         NewGoalService(repository.Goal),
-		GoalProgress: NewGoalProgressService(repository.GoalProgress),
+		Goal:         goalService,
+		GoalProgress: NewGoalProgressService(repository.GoalProgress, goalService),
 	}
 }

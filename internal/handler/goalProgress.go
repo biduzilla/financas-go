@@ -68,7 +68,7 @@ func (h *GoalProgressHandler) Create(w http.ResponseWriter, r *http.Request) {
 		gP.Goal.User = user
 	}
 
-	err := h.gP.Insert(v, gP)
+	err := h.gP.Insert(v, gP, user.ID)
 	if err != nil {
 		h.errRsp.HandlerErrorResponse(w, r, err, v)
 		return
@@ -106,7 +106,9 @@ func (h *GoalProgressHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := h.contextGetUser(r)
-	err := h.gP.Delete(id, user.ID)
+	v := validator.New()
+	err := h.gP.Delete(v, id, user.ID)
+
 	if err != nil {
 		h.errRsp.HandlerErrorResponse(w, r, err, nil)
 		return

@@ -46,7 +46,7 @@ type GoalDTO struct {
 type GoalProgress struct {
 	ID        int64
 	Goal      *Goal
-	Current   float64
+	Amount    float64
 	Date      time.Time
 	Version   *int
 	CreatedAt *time.Time
@@ -56,7 +56,7 @@ type GoalProgress struct {
 type GoalProgressDTO struct {
 	ID        *int64     `json:"goal_progress_id"`
 	Goal      *GoalDTO   `json:"goal"`
-	Current   *float64   `json:"current"`
+	Amount    *float64   `json:"amount"`
 	Date      *time.Time `json:"date"`
 	Version   *int       `json:"version"`
 	CreatedAt *time.Time `json:"created_at"`
@@ -147,7 +147,7 @@ func (g *GoalProgress) ToDTO() *GoalProgressDTO {
 	goalProgress := &GoalProgressDTO{}
 	goalProgress.ID = &g.ID
 	goalProgress.Goal = g.Goal.ToDTO()
-	goalProgress.Current = &g.Current
+	goalProgress.Amount = &g.Amount
 	goalProgress.Date = &g.Date
 	goalProgress.Version = g.Version
 	goalProgress.CreatedAt = g.CreatedAt
@@ -163,8 +163,8 @@ func (g *GoalProgressDTO) ToModel() *GoalProgress {
 	if g.Goal != nil {
 		goalProgress.Goal = g.Goal.ToModel()
 	}
-	if g.Current != nil {
-		goalProgress.Current = *g.Current
+	if g.Amount != nil {
+		goalProgress.Amount = *g.Amount
 	}
 	if g.Date != nil {
 		goalProgress.Date = *g.Date
@@ -193,6 +193,6 @@ func (g *Goal) ValidateGoal(v *validator.Validator) {
 }
 
 func (g *GoalProgress) ValidateGoalProgress(v *validator.Validator) {
-	v.Check(g.Current != 0, "current", "must be provided")
+	v.Check(g.Amount != 0, "amount", "must be provided")
 	v.Check(g.Goal != nil, "goal", "must be provided")
 }
