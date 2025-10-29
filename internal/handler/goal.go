@@ -88,8 +88,9 @@ func (h *GoalHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	v := validator.New()
 	user := h.contextGetUser(r)
-	goal, err := h.goal.GetById(id, user.ID)
+	goal, err := h.goal.GetById(v, id, user.ID)
 
 	if err != nil {
 		h.errRsp.HandlerErrorResponse(w, r, err, nil)

@@ -42,6 +42,12 @@ func (s *GoalService) GetAllByUserId(
 		return nil, filters.Metadata{}, err
 	}
 
+	for _, g := range goals {
+		if s.verifyFailedStatus(g) {
+			g.Status = model.GoalStatusFailed
+		}
+	}
+
 	return goals, meta, nil
 }
 
@@ -88,9 +94,13 @@ func (s *GoalService) Delete(id, userID int64) error {
 }
 
 func (s *GoalService) updateStatus(v *validator.Validator, userID int64, goal *model.Goal) error {
-	if time.Now().After(goal.Deadline) && goal.Current < goal.Amount && goal.Status != model.GoalStatusFailed {
+	if s.verifyFailedStatus(goal) {
 		goal.Status = model.GoalStatusFailed
 		return s.Update(v, goal, userID)
 	}
 	return nil
+}
+
+func (s *GoalService) verifyFailedStatus(goal *model.Goal) bool {
+	return time.Now().After(goal.Deadline) && goal.Current < goal.Amount && goal.Status != model.GoalStatusFailed
 }
