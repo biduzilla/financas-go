@@ -13,6 +13,13 @@ type GoalProgressRepository struct {
 	db *sql.DB
 }
 
+type GoalProgressRepositoryInterface interface {
+	GetGoalProgressIDGoal(userID, goalID int) ([]*model.GoalProgress, error)
+	Insert(gP *model.GoalProgress) error
+	Update(gP *model.GoalProgress, userID int64) error
+	Delete(goalProgressID, userID int64) error
+}
+
 func NewGoalProgressRepository(db *sql.DB) *GoalProgressRepository {
 	return &GoalProgressRepository{db: db}
 }

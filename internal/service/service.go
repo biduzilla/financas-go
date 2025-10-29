@@ -7,12 +7,13 @@ import (
 )
 
 type Service struct {
-	User        UserServiceInterface
-	Auth        AuthServiceInterface
-	Category    CategoryServiceInterface
-	Transaction TransactionServiceInterface
-	Report      ReportServiceInterface
-	Goal        GoalServiceInterface
+	User         UserServiceInterface
+	Auth         AuthServiceInterface
+	Category     CategoryServiceInterface
+	Transaction  TransactionServiceInterface
+	Report       ReportServiceInterface
+	Goal         GoalServiceInterface
+	GoalProgress GoalProgressServiceInterface
 }
 
 func NewService(db *sql.DB, config config.Config) *Service {
@@ -21,11 +22,12 @@ func NewService(db *sql.DB, config config.Config) *Service {
 	categoryService := NewCategoryService(repository.Category)
 	transactionService := NewTransactionService(repository.Transaction)
 	return &Service{
-		User:        userService,
-		Auth:        NewAuthService(userService, config),
-		Category:    categoryService,
-		Transaction: transactionService,
-		Report:      NewReportService(transactionService, categoryService),
-		Goal:        NewGoalService(repository.Goal),
+		User:         userService,
+		Auth:         NewAuthService(userService, config),
+		Category:     categoryService,
+		Transaction:  transactionService,
+		Report:       NewReportService(transactionService, categoryService),
+		Goal:         NewGoalService(repository.Goal),
+		GoalProgress: NewGoalProgressService(repository.GoalProgress),
 	}
 }
