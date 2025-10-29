@@ -50,7 +50,7 @@ func (s *GoalProgressService) Insert(v *validator.Validator, gP *model.GoalProgr
 		return err
 	}
 
-	goal, err := s.goal.GetById(gP.Goal.ID, userID)
+	goal, err := s.goal.GetById(v, gP.Goal.ID, userID)
 
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func (s *GoalProgressService) updateGoalStatus(v *validator.Validator, gPID, use
 		totalAmount += gp.Amount
 	}
 
-	goal, err := s.goal.GetById(gPID, userID)
+	goal, err := s.goal.GetById(v, gP.Goal.ID, userID)
 
 	if err != nil {
 		return err
@@ -115,12 +115,14 @@ func (s *GoalProgressService) updateGoalStatus(v *validator.Validator, gPID, use
 
 	goal.Current = totalAmount
 
-	if time.Now().After(goal.Deadline) && goal.Current < goal.Amount {
-		goal.Status = model.GoalStatusFailed
-	} else if goal.Current >= goal.Amount && goal.Status != model.GoalStatusFailed {
-		goal.Status = model.GoalStatusFinished
-	} else if goal.Current < 0 {
-		goal.Status = model.GoalStatusInProgress
+	if goal.Status != model.GoalStatusFinished {
+		if time.Now().After(goal.Deadline) && goal.Current < goal.Amount {
+			goal.Status = model.GoalStatusFailed
+		} else if goal.Current >= goal.Amount && goal.Status != model.GoalStatusFailed {
+			goal.Status = model.GoalStatusFinished
+		} else if goal.Current > 0 {
+			goal.Status = model.GoalStatusInProgress
+		}
 	}
 
 	err = s.goal.Update(v, goal, userID)

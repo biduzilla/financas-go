@@ -6,6 +6,7 @@ import (
 	"financas/internal/repository"
 	e "financas/utils/errors"
 	"financas/utils/validator"
+	"time"
 )
 
 type GoalService struct {
@@ -14,7 +15,7 @@ type GoalService struct {
 
 type GoalServiceInterface interface {
 	GetAllByUserId(name string, userID int64, f filters.Filters, v *validator.Validator) ([]*model.Goal, filters.Metadata, error)
-	GetById(id, userID int64) (*model.Goal, error)
+	GetById(v *validator.Validator, id, userID int64) (*model.Goal, error)
 	Create(v *validator.Validator, goal *model.Goal) error
 	Update(v *validator.Validator, goal *model.Goal, userID int64) error
 	Delete(id, userID int64) error
@@ -44,11 +45,13 @@ func (s *GoalService) GetAllByUserId(
 	return goals, meta, nil
 }
 
-func (s *GoalService) GetById(id, userID int64) (*model.Goal, error) {
+func (s *GoalService) GetById(v *validator.Validator, id, userID int64) (*model.Goal, error) {
 	goal, err := s.Goal.GetById(id, userID)
 	if err != nil {
 		return nil, err
 	}
+
+	s.updateStatus(v, userID, goal)
 	return goal, nil
 }
 
@@ -80,6 +83,14 @@ func (s *GoalService) Delete(id, userID int64) error {
 	err := s.Goal.Delete(id, userID)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *GoalService) updateStatus(v *validator.Validator, userID int64, goal *model.Goal) error {
+	if time.Now().After(goal.Deadline) && goal.Current < goal.Amount && goal.Status != model.GoalStatusFailed {
+		goal.Status = model.GoalStatusFailed
+		return s.Update(v, goal, userID)
 	}
 	return nil
 }
