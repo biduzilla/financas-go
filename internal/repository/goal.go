@@ -33,17 +33,17 @@ func (r *GoalRepository) GetAllByUserId(name string, userID int64, f filters.Fil
 	query := fmt.Sprintf(`
 	SELECT 
 		count(*) OVER(),
-		id, 
-		name, 
-		description,  
-		user_id,
-		deadline, 
-		amount, 
-		current,
-		status,
-		version,
-		created_at,
-		deleted,
+		goals.id, 
+		goals.name, 
+		goals.description,  
+		goals.user_id,
+		goals.deadline, 
+		goals.amount, 
+		goals.current,
+		goals.status,
+		goals.version,
+		goals.	created_at,
+		goals.deleted,
 		u.created_at as u_created_at, 
 		u.name as u_name,
 		u.phone as u_phone,
@@ -53,8 +53,10 @@ func (r *GoalRepository) GetAllByUserId(name string, userID int64, f filters.Fil
 		u.version as u_version
 	FROM goals
 	inner join users u on (goals.user_id = u.id)
-	WHERE (to_tsvector('simple', name) @@ plainto_tsquery('simple', $1) OR $1 = '')
-	AND user_id = $2 AND deleted = false
+	WHERE 
+		(to_tsvector('simple', goals.name) @@ plainto_tsquery('simple', $1) OR $1 = '')
+		AND user_id = $2 
+		AND goals.deleted = false
 	ORDER BY %s %s, id ASC
 	LIMIT $3 OFFSET $4
 	`, f.SortColumn(), f.SortDirection())
@@ -119,18 +121,18 @@ func (r *GoalRepository) GetAllByUserId(name string, userID int64, f filters.Fil
 func (r *GoalRepository) GetById(id, idUser int64) (*model.Goal, error) {
 	query := `
 	SELECT
-		id,
-		name,
-		description,
-		color,
-		user_id,
-		deadline,
-		amount,
-		current,
-		status,
-		version,
-		created_at,
-		deleted,
+		goals.id,
+		goals.name,
+		goals.description,
+		goals.color,
+		goals.user_id,
+		goals.deadline,
+		goals.amount,
+		goals.current,
+		goals.status,
+		goals.version,
+		goals.created_at,
+		goals.deleted,
 		u.created_at as u_created_at, 
 		u.name as u_name,
 		u.phone as u_phone,
@@ -155,6 +157,7 @@ func (r *GoalRepository) GetById(id, idUser int64) (*model.Goal, error) {
 		&goal.ID,
 		&goal.Name,
 		&goal.Description,
+		&goal.Color,
 		&goal.User.ID,
 		&goal.Deadline,
 		&goal.Amount,
@@ -190,26 +193,25 @@ func (r *GoalRepository) Create(goal *model.Goal) error {
 		(name, 
 		description, 
 		color, 
+		user_id,
 		deadline, 
 		amount, 
-		current, 
-		status, 
-		created_at, 
-		deleted)
-	VALUES ($1,
+		current
+		)
+	VALUES (
+		$1, 
 		$2, 
 		$3, 
 		$4, 
 		$5, 
 		$6, 
-		$7, 
-		1, 
-		NOW(), 
-		false)
+		$7
+		)
 	RETURNING 
 		id, 
 		created_at, 
-		version
+		version,
+		status
 	`
 	args := []any{
 		goal.Name,
@@ -219,6 +221,7 @@ func (r *GoalRepository) Create(goal *model.Goal) error {
 		goal.Deadline,
 		goal.Amount,
 		goal.Current,
+		goal.Status,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -231,16 +234,13 @@ func (r *GoalRepository) Create(goal *model.Goal) error {
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return e.ErrEditConflict
-		}
-
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Constraint {
 			case "unique_user_goal_name":
 				return e.ErrDuplicateName
 			}
 		}
+
 		return err
 	}
 
@@ -286,10 +286,6 @@ func (r *GoalRepository) Update(goal *model.Goal, idUser int64) error {
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(&goal.Version)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return e.ErrEditConflict
-		}
-
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Constraint {
 			case "unique_user_goal_name":

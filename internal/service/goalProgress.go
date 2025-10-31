@@ -45,6 +45,8 @@ func (s *GoalProgressService) Insert(v *validator.Validator, gP *model.GoalProgr
 		return e.ErrInvalidData
 	}
 
+	gP.Date = time.Now()
+
 	err := s.gP.Insert(gP)
 	if err != nil {
 		return err

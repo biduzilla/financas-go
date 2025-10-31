@@ -60,6 +60,7 @@ func NewRouter(
 		transaction:    NewTransactionRouter(h.Transaction, m),
 		report:         NewReportRouter(h.Report, m),
 		goal:           NewGoalRouter(h.Goal, m),
+		goalProgress:   NewGoalProgressRouter(h.GoalProgress, m),
 	}
 }
 

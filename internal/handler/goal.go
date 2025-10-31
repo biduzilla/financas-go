@@ -64,7 +64,7 @@ func (h *GoalHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	goalsDTO := make([]*model.GoalDTO, len(goals))
+	goalsDTO := make([]*model.GoalDTO, 0, len(goals))
 
 	for _, g := range goals {
 		goalsDTO = append(goalsDTO, g.ToDTO())
@@ -93,7 +93,7 @@ func (h *GoalHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	goal, err := h.goal.GetById(v, id, user.ID)
 
 	if err != nil {
-		h.errRsp.HandlerErrorResponse(w, r, err, nil)
+		h.errRsp.HandlerErrorResponse(w, r, err, v)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (h *GoalHandler) Create(w http.ResponseWriter, r *http.Request) {
 	goal := dto.ToModel()
 	goal.User = user
 	if err := h.goal.Create(v, goal); err != nil {
-		h.errRsp.HandlerErrorResponse(w, r, err, nil)
+		h.errRsp.HandlerErrorResponse(w, r, err, v)
 		return
 	}
 
@@ -145,7 +145,7 @@ func (h *GoalHandler) Update(w http.ResponseWriter, r *http.Request) {
 	goal := dto.ToModel()
 	goal.User = user
 	if err := h.goal.Update(v, goal, user.ID); err != nil {
-		h.errRsp.HandlerErrorResponse(w, r, err, nil)
+		h.errRsp.HandlerErrorResponse(w, r, err, v)
 		return
 	}
 

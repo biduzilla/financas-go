@@ -223,11 +223,10 @@ func (r *GoalProgressRepository) Insert(gP *model.GoalProgress) error {
 	INSERT INTO goal_progress (
 		amount,
 		date,
-		created_at,
 		deleted,
 		goal_id
 	) VALUES (
-		$1, $2, $3, false, $5
+		$1, $2, false, $3
 	) RETURNING 
 	 	id,
 		created_at,
@@ -240,9 +239,6 @@ func (r *GoalProgressRepository) Insert(gP *model.GoalProgress) error {
 	args := []any{
 		gP.Amount,
 		gP.Date,
-		gP.Version,
-		gP.CreatedAt,
-		gP.Deleted,
 		gP.Goal.ID,
 	}
 
