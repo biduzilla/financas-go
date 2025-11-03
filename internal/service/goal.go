@@ -46,6 +46,7 @@ func (s *GoalService) GetAllByUserId(
 		if s.verifyFailedStatus(g) {
 			g.Status = model.GoalStatusFailed
 		}
+		s.calculateInstallments(g)
 	}
 
 	return goals, meta, nil
@@ -58,6 +59,7 @@ func (s *GoalService) GetById(v *validator.Validator, id, userID int64) (*model.
 	}
 
 	s.updateStatus(v, userID, goal)
+	s.calculateInstallments(goal)
 	return goal, nil
 }
 
@@ -103,4 +105,31 @@ func (s *GoalService) updateStatus(v *validator.Validator, userID int64, goal *m
 
 func (s *GoalService) verifyFailedStatus(goal *model.Goal) bool {
 	return time.Now().After(goal.Deadline) && goal.Current < goal.Amount && goal.Status != model.GoalStatusFailed
+}
+
+func (s *GoalService) calculateInstallments(goal *model.Goal) {
+	now := time.Now()
+	if goal.Deadline.Before(now) {
+		return
+	}
+
+	if goal.Installments == nil {
+		goal.Installments = &model.Installments{}
+	}
+
+	yearDiff := goal.Deadline.Year() - now.Year()
+	monthDiff := int(goal.Deadline.Month()) - int(now.Month())
+	quantity := yearDiff*12 + monthDiff
+
+	if quantity <= 0 {
+		return
+	}
+
+	goal.Installments.Quantity = quantity
+	remaining := goal.Amount - goal.Current
+	if remaining <= 0 {
+		return
+	}
+
+	goal.Installments.Amount = remaining / float64(quantity)
 }

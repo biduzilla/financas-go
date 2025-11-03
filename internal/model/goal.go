@@ -15,32 +15,38 @@ const (
 )
 
 type Goal struct {
-	ID          int64
-	Name        string
-	Description string
-	Color       string
-	User        *User
-	Deadline    time.Time
-	Amount      float64
-	Current     float64
-	Status      GoalStatus
-	Version     int
-	CreatedAt   time.Time
-	Deleted     bool
+	ID           int64
+	Name         string
+	Description  string
+	Color        string
+	User         *User
+	Deadline     time.Time
+	Amount       float64
+	Current      float64
+	Status       GoalStatus
+	Version      int
+	CreatedAt    time.Time
+	Deleted      bool
+	Installments *Installments
+}
+type GoalDTO struct {
+	ID           *int64        `json:"goal_id"`
+	Name         *string       `json:"name"`
+	Description  *string       `json:"description"`
+	Color        *string       `json:"color"`
+	User         *UserDTO      `json:"user"`
+	Deadline     *time.Time    `json:"deadline"`
+	Amount       *float64      `json:"amount"`
+	Current      *float64      `json:"current"`
+	Status       *string       `json:"status"`
+	Version      *int          `json:"version"`
+	CreatedAt    *time.Time    `json:"created_at"`
+	Installments *Installments `json:"Installments"`
 }
 
-type GoalDTO struct {
-	ID          *int64     `json:"goal_id"`
-	Name        *string    `json:"name"`
-	Description *string    `json:"description"`
-	Color       *string    `json:"color"`
-	User        *UserDTO   `json:"user"`
-	Deadline    *time.Time `json:"deadline"`
-	Amount      *float64   `json:"amount"`
-	Current     *float64   `json:"current"`
-	Status      *string    `json:"status"`
-	Version     *int       `json:"version"`
-	CreatedAt   *time.Time `json:"created_at"`
+type Installments struct {
+	Amount   float64
+	Quantity int
 }
 
 type GoalProgress struct {
@@ -107,6 +113,7 @@ func (g *Goal) ToDTO() *GoalDTO {
 	goal.Status = &statusStr
 	goal.Version = &g.Version
 	goal.CreatedAt = &g.CreatedAt
+	goal.Installments = g.Installments
 	return goal
 }
 
