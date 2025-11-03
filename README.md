@@ -1,6 +1,8 @@
-# Finanças API
+# Financas - Sistema de Gestão Financeira Pessoal
 
-Uma API RESTful para gerenciamento de finanças pessoais, desenvolvida em Go com arquitetura limpa e boas práticas.
+# Sobre o Projeto
+O Financas é uma aplicação web completa para gestão financeira pessoal, desenvolvida em Go. O sistema permite que usuários controlem suas finanças através de categorização de transações, estabelecimento de metas financeiras, acompanhamento de progresso e geração de relatórios detalhados. A aplicação oferece uma solução robusta e segura para ajudar usuários a alcançarem seus objetivos financeiros.
+
 
 ## 📋 Funcionalidades
 
@@ -20,6 +22,15 @@ Uma API RESTful para gerenciamento de finanças pessoais, desenvolvida em Go com
 - **Transações Financeiras**
   - CRUD completo de transações
   - Filtragem por categoria
+  - Acesso restrito a usuários ativados
+
+- **Relatórios Financeiros**
+  - Relatórios completos
+  - Acesso restrito a usuários ativados
+
+- **Objetivos Financeiros**
+  - CRUD completo de objetivos financeiros
+  - Ajuda no planejamento de objetivos estabelecidos
   - Acesso restrito a usuários ativados
 
 - **Monitoramento**
