@@ -35,7 +35,7 @@ type GoalDTO struct {
 	Description  *string       `json:"description"`
 	Color        *string       `json:"color"`
 	User         *UserDTO      `json:"user"`
-	Deadline     *time.Time    `json:"deadline"`
+	Deadline     *string       `json:"deadline"`
 	Amount       *float64      `json:"amount"`
 	Current      *float64      `json:"current"`
 	Status       *string       `json:"status"`
@@ -106,7 +106,8 @@ func (g *Goal) ToDTO() *GoalDTO {
 	goal.Description = &g.Description
 	goal.Color = &g.Color
 	goal.User = g.User.ToDTO()
-	goal.Deadline = &g.Deadline
+	deadlineStr := g.Deadline.Format("02/01/2006")
+	goal.Deadline = &deadlineStr
 	goal.Amount = &g.Amount
 	goal.Current = &g.Current
 	statusStr := g.Status.String()
@@ -136,7 +137,11 @@ func (m *GoalDTO) ToModel() *Goal {
 		goal.User = m.User.ToModel()
 	}
 	if m.Deadline != nil {
-		goal.Deadline = *m.Deadline
+		parsedTime, err := time.Parse("02/01/2006", *m.Deadline)
+		if err != nil {
+			parsedTime = time.Now()
+		}
+		goal.Deadline = parsedTime
 	}
 	if m.Amount != nil {
 		goal.Amount = *m.Amount

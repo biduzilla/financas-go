@@ -221,7 +221,6 @@ func (r *GoalRepository) Create(goal *model.Goal) error {
 		goal.Deadline,
 		goal.Amount,
 		goal.Current,
-		goal.Status,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -231,6 +230,7 @@ func (r *GoalRepository) Create(goal *model.Goal) error {
 		&goal.ID,
 		&goal.CreatedAt,
 		&goal.Version,
+		&goal.Status,
 	)
 
 	if err != nil {
