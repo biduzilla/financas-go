@@ -26,7 +26,7 @@ func NewCategoryRepository(db *sql.DB) *CategoryRepository {
 type CategoryRepositoryIntercafe interface {
 	GetByID(id int64, userID int64) (*model.Category, error)
 	GetAll(name string, userID int64, f filters.Filters) ([]*model.Category, filters.Metadata, error)
-	Insert(category *model.Category, userID int64) error
+	Insert(category *model.Category, userID int64, tx *sql.Tx) error
 	Update(category *model.Category, userID int64) error
 	Delete(id int64, userID int64) error
 }
@@ -124,7 +124,7 @@ func (r *CategoryRepository) GetAll(name string, userID int64, f filters.Filters
 	return categories, metaData, nil
 }
 
-func (r *CategoryRepository) Insert(category *model.Category, userID int64) error {
+func (r *CategoryRepository) Insert(category *model.Category, userID int64, tx *sql.Tx) error {
 	query := `
 	INSERT INTO categories (name, type, color, user_id)
 	VALUES ($1, $2, $3, $4)
@@ -141,17 +141,13 @@ func (r *CategoryRepository) Insert(category *model.Category, userID int64) erro
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(
+	err := tx.QueryRowContext(ctx, query, args...).Scan(
 		&category.ID,
 		&category.CreatedAt,
 		&category.Version,
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return e.ErrEditConflict
-		}
-
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Constraint {
 			case "unique_user_category_name":

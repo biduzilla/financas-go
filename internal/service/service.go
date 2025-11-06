@@ -19,7 +19,7 @@ type Service struct {
 func NewService(db *sql.DB, config config.Config) *Service {
 	repository := repository.NewRepository(db)
 	userService := NewUserService(repository.User)
-	categoryService := NewCategoryService(repository.Category)
+	categoryService := NewCategoryService(repository.Category, db)
 	transactionService := NewTransactionService(repository.Transaction)
 	goalService := NewGoalService(repository.Goal)
 

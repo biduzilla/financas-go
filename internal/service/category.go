@@ -1,15 +1,18 @@
 package service
 
 import (
+	"database/sql"
 	"financas/internal/model"
 	"financas/internal/model/filters"
 	"financas/internal/repository"
+	"financas/utils"
 	e "financas/utils/errors"
 	"financas/utils/validator"
 )
 
 type CategoryService struct {
 	CategoryRepository repository.CategoryRepositoryIntercafe
+	db                 *sql.DB
 }
 
 type CategoryServiceInterface interface {
@@ -20,9 +23,10 @@ type CategoryServiceInterface interface {
 	Delete(id int64, userID int64) error
 }
 
-func NewCategoryService(c repository.CategoryRepositoryIntercafe) *CategoryService {
+func NewCategoryService(c repository.CategoryRepositoryIntercafe, db *sql.DB) *CategoryService {
 	return &CategoryService{
 		CategoryRepository: c,
+		db:                 db,
 	}
 }
 
@@ -58,13 +62,9 @@ func (s *CategoryService) Insert(category *model.Category, v *validator.Validato
 		return e.ErrInvalidData
 	}
 
-	err := s.CategoryRepository.Insert(category, userID)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return utils.RunInTx(s.db, func(tx *sql.Tx) error {
+		return s.CategoryRepository.Insert(category, userID, tx)
+	})
 
 }
 

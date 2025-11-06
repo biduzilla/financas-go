@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"financas/utils/validator"
@@ -29,6 +30,23 @@ func ReadIntParam(r *http.Request, key string) (int64, error) {
 	}
 
 	return value, nil
+}
+
+func RunInTx(db *sql.DB, fn func(tx *sql.Tx) error) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	if err := fn(tx); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func ReadString(qs url.Values, key, defaultValue string) string {
